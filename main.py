@@ -10,9 +10,11 @@ ADMIN_IDS = [8429424734, 8472943262]
 
 bot = telebot.TeleBot(TOKEN)
 
-# In-memory storage & your exact bots directory
+# In-memory storage & exact bots directory
 users = set()
 config = {
+    # Apna public channel username yahan daalein (jaise "@MohitFzxChannel" ya private link)
+    "channel_username": "@THEAURA01", 
     "channel_link": "https://t.me/+UyBmDcQRKORlNGI1",
 }
 
@@ -25,64 +27,86 @@ MY_BOTS = [
 def is_admin(user_id):
     return user_id in ADMIN_IDS
 
+def check_subscription(user_id):
+    """Real Telegram API check for channel membership"""
+    try:
+        member = bot.get_chat_member(config["channel_username"], user_id)
+        if member.status in ['member', 'administrator', 'creator']:
+            return True
+    except Exception as e:
+        print(f"Force Join Check Error: {e}")
+        # Agar channel username galat hua ya bot channel ka admin nahi hua, toh bypass na ho isiliye False rakhein
+        return False
+    return False
+
 # --- START COMMAND ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.chat.id
     users.add(user_id)
     
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_channel = types.InlineKeyboardButton("📢 JOIN OUR CHANNEL", url=config["channel_link"])
-    btn_claim = types.InlineKeyboardButton("✅ I HAVE JOINED", callback_data="claim_reward")
-    markup.add(btn_channel, btn_claim)
-    
-    welcome_text = (
-        "🔥 **WELCOME TO MOHIT FZX BOT** 🔥\n\n"
-        "📢 Is bot ko use karne ke liye aapko hamara official channel join karna zaroori hai!\n\n"
-        "👇 Niche diye gaye button par click karke channel join karein, phir 'I HAVE JOINED' dabayein:"
-    )
-    bot.send_message(user_id, welcome_text, parse_mode="Markdown", reply_markup=markup)
-
-# --- CLAIM / REWARD HANDLER ---
-@bot.callback_query_handler(func=lambda call: call.data == "claim_reward")
-def claim_reward(call):
-    user_id = call.message.chat.id
-    bot.answer_callback_query(call.id, "✨ Success!")
-    
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    
-    # Add your exact Telegram bots with custom texts
-    for bot_item in MY_BOTS:
-        markup.add(types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"]))
-        
-    btn_back = types.InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_home")
-    markup.add(btn_back)
-    
-    claim_text = (
-        "🎉 **CONGRATULATIONS!** 🎉\n\n"
-        "✅ Aapne successfully channel join kar liya hai!\n\n"
-        "🤖 **MOHIT FZX OFFICIAL BOTS:**\n"
-        "Niche diye gaye buttons se aap hamare saare bots access kar sakte hain:\n\n"
-        "💀 POWERED BY MOHIT™ 🚀"
-    )
-    try:
-        bot.edit_message_text(
-            claim_text,
-            chat_id=user_id,
-            message_id=call.message.message_id,
-            parse_mode="Markdown",
-            reply_markup=markup
+    # Check if user has joined the channel
+    if check_subscription(user_id):
+        # Already joined -> Show Bots Directory
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        for bot_item in MY_BOTS:
+            markup.add(types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"]))
+            
+        success_text = (
+            "🎉 **WELCOME BACK TO MOHIT FZX BOT** 🎉\n\n"
+            "✅ Aapne channel join kiya hua hai!\n\n"
+            "🤖 **MOHIT FZX OFFICIAL BOTS:**\n"
+            "Niche diye gaye buttons se apne pasandida bots access karein:\n\n"
+            "💀 POWERED BY MOHIT™ 🚀"
         )
-    except:
-        bot.send_message(user_id, claim_text, parse_mode="Markdown", reply_markup=markup)
+        bot.send_message(user_id, success_text, parse_mode="Markdown", reply_markup=markup)
+    else:
+        # Not joined -> Show Force Join Lock
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        btn_channel = types.InlineKeyboardButton("📢 JOIN OUR CHANNEL", url=config["channel_link"])
+        btn_check = types.InlineKeyboardButton("🔄 CHECK MEMBERSHIP", callback_data="check_join")
+        markup.add(btn_channel, btn_check)
+        
+        welcome_text = (
+            "🔥 **WELCOME TO MOHIT FZX BOT** 🔥\n\n"
+            "❌ **ACCESS DENIED!**\n"
+            "Is bot ko use karne ke liye aapko hamara official channel join karna **compulsory** hai!\n\n"
+            "1️⃣ Pehle **'📢 JOIN OUR CHANNEL'** par click karke join karein.\n"
+            "2️⃣ Phir **'🔄 CHECK MEMBERSHIP'** button dabayein."
+        )
+        bot.send_message(user_id, welcome_text, parse_mode="Markdown", reply_markup=markup)
 
-@bot.callback_query_handler(func=lambda call: call.data == "back_home")
-def back_home(call):
-    try:
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-    except:
-        pass
-    send_welcome(call.message)
+# --- CHECK MEMBERSHIP CALLBACK ---
+@bot.callback_query_handler(func=lambda call: call.data == "check_join")
+def verify_join(call):
+    user_id = call.message.chat.id
+    
+    if check_subscription(user_id):
+        bot.answer_callback_query(call.id, "✅ Channel Joined Successfully!", show_alert=False)
+        
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        for bot_item in MY_BOTS:
+            markup.add(types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"]))
+            
+        success_text = (
+            "🎉 **CONGRATULATIONS!** 🎉\n\n"
+            "✅ Membership verified successfully!\n\n"
+            "🤖 **MOHIT FZX OFFICIAL BOTS:**\n"
+            "Niche diye gaye buttons se apne bots access karein:\n\n"
+            "💀 POWERED BY MOHIT™ 🚀"
+        )
+        try:
+            bot.edit_message_text(
+                success_text,
+                chat_id=user_id,
+                message_id=call.message.message_id,
+                parse_mode="Markdown",
+                reply_markup=markup
+            )
+        except:
+            bot.send_message(user_id, success_text, parse_mode="Markdown", reply_markup=markup)
+    else:
+        bot.answer_callback_query(call.id, "❌ Tumne abhi tak channel join nahi kiya hai!", show_alert=True)
 
 # ================= ADMIN PANEL SECTION =================
 @bot.message_handler(commands=['admin'])
@@ -92,8 +116,7 @@ def admin_panel(message):
         markup = types.InlineKeyboardMarkup(row_width=2)
         btn_broadcast = types.InlineKeyboardButton("📢 Broadcast", callback_data="adm_broadcast")
         btn_stats = types.InlineKeyboardButton("📊 Stats", callback_data="adm_stats")
-        btn_setchannel = types.InlineKeyboardButton("🔗 Set Channel", callback_data="adm_setchannel")
-        markup.add(btn_broadcast, btn_stats, btn_setchannel)
+        markup.add(btn_broadcast, btn_stats)
         
         bot.send_message(
             user_id,
@@ -121,11 +144,6 @@ def admin_callbacks(call):
         bot.answer_callback_query(call.id)
         msg = bot.send_message(admin_chat_id, "📢 Saare users ko kya bhejna hai? Message type karke bhejo:")
         bot.register_next_step_handler(msg, process_broadcast)
-        
-    elif data == "adm_setchannel":
-        bot.answer_callback_query(call.id)
-        msg = bot.send_message(admin_chat_id, f"🔗 Naya Channel Link bhejo (Current: `{config['channel_link']}`):", parse_mode="Markdown")
-        bot.register_next_step_handler(msg, process_set_channel)
 
 def process_broadcast(message):
     if not is_admin(message.chat.id):
@@ -144,12 +162,6 @@ def process_broadcast(message):
             
     bot.send_message(message.chat.id, f"✅ **Broadcast Done!**\nSuccessful: `{success}` | Failed: `{fail}`", parse_mode="Markdown")
 
-def process_set_channel(message):
-    if not is_admin(message.chat.id):
-        return
-    config["channel_link"] = message.text.strip()
-    bot.send_message(message.chat.id, f"✅ Channel link updated to:\n`{config['channel_link']}`", parse_mode="Markdown")
-
 # --- FLASK SERVER ---
 app = Flask(__name__)
 
@@ -165,6 +177,6 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     
-    print("Master Bot with Exact Bot Links is running...")
+    print("Bulletproof Bot with Real Force Join is running...")
     bot.infinity_polling()
-                         
+    
