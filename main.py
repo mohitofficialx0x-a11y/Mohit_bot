@@ -18,29 +18,27 @@ config = {
     "channel_link": "https://t.me/+UyBmDcQRKORlNGI1",  # Channel join invite link
 }
 
-# Temporary storage for step-by-step adding
+# Temporary storage for step-by-step renaming
 temp_admin_data = {}
 
-# Halls Storage (Categories)
+# Halls Storage with 5 Demo Links each (Ready for you to update anytime!)
 HALL_BOTS = [
-    {"name": "🚀 Unlimited OTP Bot", "url": "https://t.me/Unlimited_otp_s_bot"},
-    {"name": "daily paisa kamae 💸", "url": "https://t.me/DailycheckIn_009_bot"},
+    {"name": "🚀 Demo Bot 1", "url": "https://t.me/theaura01/1"},
+    {"name": "🚀 Demo Bot 2", "url": "https://t.me/theaura01/2"},
+    {"name": "🚀 Demo Bot 3", "url": "https://t.me/theaura01/3"},
+    {"name": "🚀 Demo Bot 4", "url": "https://t.me/theaura01/4"},
+    {"name": "🚀 Demo Bot 5", "url": "https://t.me/theaura01/5"},
 ]
 
 YONO_APPS = [
     {"name": "🔥 🌟 OFFICIAL WEBSITE MARKET 🌟 🔥", "url": "https://yono-apps-ka-marketgvd.vercel.app/"},
     {"name": "📢 Join Telegram Channel", "url": "https://t.me/THEAURA01"},
     {"name": "📸 Follow Instagram", "url": "https://www.instagram.com/mohit__fzx?exln=MXUzbmh5NHg1OW9law=="},
-    {"name": "1. 🎰 Spin Crush (Bonus ₹100)", "url": "https://3xndhpkhk03.com/?code=ADEJXPMF9ME&t=1791682294"},
-    {"name": "2. 🎮 Yono Arcade (Bonus ₹100)", "url": "https://yonoreferral8.com/?code=N347JULF3PK&t=1791683010"},
-    {"name": "3. 💎 Spin 777 (Bonus ₹100)", "url": "http://spin777ee.com/?code=RHX29F3M1LL&t=1791683198"},
-    {"name": "4. 🃏 Yono Rummy (Bonus ₹100)", "url": "https://yonorummy063.com/?code=MPXALT2UBS2&t=1791683265"},
-    {"name": "5. 🔥 Yono 777 (Bonus ₹100)", "url": "https://yono777hub.online/?code=F9MGVJ2JANK&t=1791683360"},
-    {"name": "6. 🏆 Jaiho Rummy (Bonus ₹100)", "url": "http://jaihorummyagent.in/?code=JURKHKZ28JF&t=1791683459"},
-    {"name": "7. 💥 Rumble Rummy (Bonus ₹100)", "url": "https://rumblerummyag.com/?code=L9TZZYKQMMY&t=1791683587"},
-    {"name": "8. 👑 Ind Club (Bonus ₹100)", "url": "https://indclubhhh.com/?code=ZGX6CAZX5S4&t=1791683687"},
-    {"name": "9. 🌟 Spin Gold (Bonus ₹100)", "url": "http://spingoldi.com/?code=8D2N5AX6A2C&t=1791683854"},
-    {"name": "10. 🎯 Yono Slots (Bonus ₹100)", "url": "https://www.yonoslotsjeetstar.com/?code=V91TQ7MV4T7&t=1791683946"},
+    {"name": "1. 🎰 Demo App 1 (Bonus ₹100)", "url": "https://t.me/theaura01/101"},
+    {"name": "2. 🎮 Demo App 2 (Bonus ₹100)", "url": "https://t.me/theaura01/102"},
+    {"name": "3. 💎 Demo App 3 (Bonus ₹100)", "url": "https://t.me/theaura01/103"},
+    {"name": "4. 🃏 Demo App 4 (Bonus ₹100)", "url": "https://t.me/theaura01/104"},
+    {"name": "5. 🔥 Demo App 5 (Bonus ₹100)", "url": "https://t.me/theaura01/105"},
 ]
 
 
@@ -163,7 +161,7 @@ def verify_join(call):
     )
 
 
-# ================= ADMIN PANEL & STEP-BY-STEP HALL MANAGER =================
+# ================= ADMIN PANEL & RENAME MANAGER =================
 @bot.message_handler(commands=["admin"])
 def admin_panel(message):
   user_id = message.chat.id
@@ -171,10 +169,9 @@ def admin_panel(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
     btn_broadcast = types.InlineKeyboardButton("📢 Broadcast", callback_data="adm_broadcast")
     btn_stats = types.InlineKeyboardButton("📊 Stats", callback_data="adm_stats")
-    btn_addapp = types.InlineKeyboardButton("➕ Add to Hall", callback_data="adm_addapp")
-    btn_delapp = types.InlineKeyboardButton("🗑️ Delete from Hall", callback_data="adm_delapp")
+    btn_rename = types.InlineKeyboardButton("✏️ Rename App / Link", callback_data="adm_rename")
     markup.add(btn_broadcast, btn_stats)
-    markup.add(btn_addapp, btn_delapp)
+    markup.add(btn_rename)
 
     bot.send_message(
         user_id,
@@ -188,7 +185,7 @@ def admin_panel(message):
     bot.reply_to(message, "❌ Yeh command sirf admin ke liye hai!")
 
 
-@bot.callback_query_handler(func=lambda call: call.data in ["adm_stats", "adm_broadcast", "adm_addapp", "adm_delapp"])
+@bot.callback_query_handler(func=lambda call: call.data in ["adm_stats", "adm_broadcast", "adm_rename"])
 def admin_main_callbacks(call):
   if not is_admin(call.message.chat.id):
     return
@@ -212,73 +209,42 @@ def admin_main_callbacks(call):
     )
     bot.register_next_step_handler(msg, process_broadcast)
 
-  elif data == "adm_addapp":
+  elif data == "adm_rename":
     bot.answer_callback_query(call.id)
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("Hall-1 = 🚀 OTP & Earning Panels", callback_data="hall_add_1"),
-        types.InlineKeyboardButton("Hall-2 = 💥 Need Yono Apps?", callback_data="hall_add_2")
+        types.InlineKeyboardButton("Hall-1 = 🚀 OTP & Earning Panels", callback_data="hall_ren_1"),
+        types.InlineKeyboardButton("Hall-2 = 💥 Need Yono Apps?", callback_data="hall_ren_2")
     )
-    bot.send_message(admin_chat_id, "😂 **Please select your Hall (Category):**", parse_mode="Markdown", reply_markup=markup)
-
-  elif data == "adm_delapp":
-    bot.answer_callback_query(call.id)
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    markup.add(
-        types.InlineKeyboardButton("Hall-1 = 🚀 OTP & Earning Panels", callback_data="hall_del_1"),
-        types.InlineKeyboardButton("Hall-2 = 💥 Need Yono Apps?", callback_data="hall_del_2")
-    )
-    bot.send_message(admin_chat_id, "🗑️ **Kis Hall se item delete karna hai select karein:**", parse_mode="Markdown", reply_markup=markup)
+    bot.send_message(admin_chat_id, "✏️ **Kis Hall ke item ko rename karna hai select karein:**", parse_mode="Markdown", reply_markup=markup)
 
 
-@bot.callback_query_handler(func=lambda call: call.data in ["hall_add_1", "hall_add_2", "hall_del_1", "hall_del_2"])
-def hall_action_callbacks(call):
+@bot.callback_query_handler(func=lambda call: call.data in ["hall_ren_1", "hall_ren_2"])
+def hall_rename_callback(call):
   if not is_admin(call.message.chat.id):
     return
 
   admin_chat_id = call.message.chat.id
-  data = call.data
+  hall_no = call.data.split("_")[-1]
   bot.answer_callback_query(call.id)
 
-  if data in ["hall_add_1", "hall_add_2"]:
-    hall_no = data.split("_")[-1]
-    temp_admin_data[admin_chat_id] = {"hall": hall_no}
-    msg = bot.send_message(
-        admin_chat_id,
-        f"📝 **Hall-{hall_no} ke liye naya item add kar rahe hain:**\n\n"
-        "Pehle iska **Naam (Title)** type karke bhejo:\n"
-        "*(Rukne ke liye /cancel bhejein)*",
-        parse_mode="Markdown"
-    )
-    bot.register_next_step_handler(msg, get_app_name)
+  items = HALL_BOTS if hall_no == "1" else YONO_APPS
+  if not items:
+    bot.send_message(admin_chat_id, f"❌ Hall-{hall_no} bilkul khali hai!")
+    return
 
-  elif data == "hall_del_1":
-    items = HALL_BOTS
-    if not items:
-      bot.send_message(admin_chat_id, "❌ Hall-1 bilkul khali hai!")
-      return
-    text = "🗑️ **Hall-1 ke items ki list (Exact naam type karke bhejo delete karne ke liye):**\n\n"
-    for idx, item in enumerate(items):
-      text += f"{idx+1}. {item['name']}\n"
-    text += "\n*(Rukne ke liye /cancel bhejein)*"
-    msg = bot.send_message(admin_chat_id, text, parse_mode="Markdown")
-    bot.register_next_step_handler(msg, lambda m: process_delete_from_hall(m, "1"))
+  text = f"✏️ **Hall-{hall_no} ke items ki list (Jisko rename karna hai uska exact naam type karo):**\n\n"
+  for idx, item in enumerate(items):
+    text += f"{idx+1}. `{item['name']}`\n"
+  text += "\n*(Rukne ke liye /cancel bhejein)*"
 
-  elif data == "hall_del_2":
-    items = YONO_APPS
-    if not items:
-      bot.send_message(admin_chat_id, "❌ Hall-2 bilkul khali hai!")
-      return
-    text = "🗑️ **Hall-2 ke items ki list (Exact naam type karke bhejo delete karne ke liye):**\n\n"
-    for idx, item in enumerate(items):
-      text += f"{idx+1}. {item['name']}\n"
-    text += "\n*(Rukne ke liye /cancel bhejein)*"
-    msg = bot.send_message(admin_chat_id, text, parse_mode="Markdown")
-    bot.register_next_step_handler(msg, lambda m: process_delete_from_hall(m, "2"))
+  temp_admin_data[admin_chat_id] = {"hall": hall_no}
+  msg = bot.send_message(admin_chat_id, text, parse_mode="Markdown")
+  bot.register_next_step_handler(msg, get_target_item_to_rename)
 
 
-# --- STEP 1: GET APP NAME ---
-def get_app_name(message):
+# --- STEP 1: SELECT ITEM TO RENAME ---
+def get_target_item_to_rename(message):
   if not is_admin(message.chat.id):
     return
   if message.text and message.text.startswith("/cancel"):
@@ -286,25 +252,64 @@ def get_app_name(message):
     return
 
   admin_id = message.chat.id
-  app_name = message.text.strip() if message.text else "App"
+  target_name = message.text.strip().lower() if message.text else ""
   
   if admin_id not in temp_admin_data:
-    temp_admin_data[admin_id] = {}
-  
-  temp_admin_data[admin_id]["name"] = app_name
+    bot.send_message(admin_id, "❌ Session expired. Dobara /admin se try karein.", reply_markup=get_main_keyboard())
+    return
 
+  hall_no = temp_admin_data[admin_id]["hall"]
+  items = HALL_BOTS if hall_no == "1" else YONO_APPS
+
+  found_item = None
+  for item in items:
+    if target_name in item['name'].lower():
+      found_item = item
+      break
+
+  if not found_item:
+    bot.send_message(admin_id, "❌ Yeh naam list mein nahi mila! Sahi naam type karein ya /cancel bhejein.")
+    return
+
+  temp_admin_data[admin_id]["old_name"] = found_item['name']
+  
   msg = bot.send_message(
       admin_id,
-      f"✅ Naam save ho gaya: **{app_name}**\n\n"
-      "🔗 **Ab iska link bhejo (Aap direct Telegram link ya forward text bhej sakte hain):**\n"
+      f"✅ Mil gaya: **{found_item['name']}**\n\n"
+      "📝 **Ab iska Naya Naam (New Title) type karke bhejo:**\n"
       "*(Rukne ke liye /cancel bhejein)*",
       parse_mode="Markdown"
   )
-  bot.register_next_step_handler(msg, get_app_url)
+  bot.register_next_step_handler(msg, get_new_app_name)
 
 
-# --- STEP 2: GET APP URL & EXTRACT CLEAN LINK (Advanced Parser) ---
-def get_app_url(message):
+# --- STEP 2: GET NEW NAME ---
+def get_new_app_name(message):
+  if not is_admin(message.chat.id):
+    return
+  if message.text and message.text.startswith("/cancel"):
+    cancel_operation(message)
+    return
+
+  admin_id = message.chat.id
+  new_name = message.text.strip() if message.text else ""
+
+  if admin_id in temp_admin_data:
+    temp_admin_data[admin_id]["new_name"] = new_name
+    msg = bot.send_message(
+        admin_id,
+        f"✅ Naya naam set ho gaya: **{new_name}**\n\n"
+        "🔗 **Ab iska Naya Link (URL ya t.me link) bhejo:**\n"
+        "*(Rukne ke liye /cancel bhejein)*",
+        parse_mode="Markdown"
+    )
+    bot.register_next_step_handler(msg, get_new_app_url)
+  else:
+    bot.send_message(admin_id, "❌ Session error! Dobara /admin se try karein.", reply_markup=get_main_keyboard())
+
+
+# --- STEP 3: GET NEW URL & UPDATE ---
+def get_new_app_url(message):
   if not is_admin(message.chat.id):
     return
   
@@ -315,7 +320,7 @@ def get_app_url(message):
 
   admin_id = message.chat.id
   
-  # Smart URL Extractor: Poore text/forward mein se https ya t.me wala link dhoond lega
+  # Smart URL Extractor
   extracted_url = ""
   words = text_to_check.split()
   for word in words:
@@ -323,34 +328,36 @@ def get_app_url(message):
       extracted_url = word.strip()
       break
 
-  # Agar direct link nahi mila toh pehla word utha lo
   if not extracted_url and words:
     extracted_url = words[0].strip()
 
   if not extracted_url:
     msg = bot.send_message(admin_id, "❌ Koi valid link nahi mila! Kripya dobara link bhejein (ya /cancel dabayein):")
-    bot.register_next_step_handler(msg, get_app_url)
+    bot.register_next_step_handler(msg, get_new_app_url)
     return
 
   if not extracted_url.startswith("http"):
     extracted_url = "https://" + extracted_url
 
-  if admin_id in temp_admin_data and "name" in temp_admin_data[admin_id]:
+  if admin_id in temp_admin_data:
     hall_no = temp_admin_data[admin_id]["hall"]
-    name = temp_admin_data[admin_id]["name"]
+    old_name = temp_admin_data[admin_id]["old_name"]
+    new_name = temp_admin_data[admin_id]["new_name"]
 
-    if hall_no == "1":
-      HALL_BOTS.append({"name": name, "url": extracted_url})
-    else:
-      YONO_APPS.append({"name": name, "url": extracted_url})
+    items = HALL_BOTS if hall_no == "1" else YONO_APPS
+    for item in items:
+      if item['name'] == old_name:
+        item['name'] = new_name
+        item['url'] = extracted_url
+        break
 
     del temp_admin_data[admin_id]
 
     bot.send_message(
         admin_id,
-        f"🎉 **Successfully Added to Hall-{hall_no}!**\n\n"
-        f"📌 Name: `{name}`\n"
-        f"🔗 URL: `{extracted_url}`",
+        f"🎉 **Successfully Updated / Renamed!**\n\n"
+        f"📌 New Name: `{new_name}`\n"
+        f"🔗 New URL: `{extracted_url}`",
         parse_mode="Markdown",
         reply_markup=get_main_keyboard()
     )
@@ -378,29 +385,6 @@ def process_broadcast(message):
       fail += 1
 
   bot.send_message(message.chat.id, f"✅ **Broadcast Done!**\nSuccessful: `{success}` | Failed: `{fail}`", reply_markup=get_main_keyboard())
-
-
-def process_delete_from_hall(message, hall_no):
-  if not is_admin(message.chat.id):
-    return
-  if message.text and message.text.startswith("/cancel"):
-    cancel_operation(message)
-    return
-
-  target_name = message.text.strip().lower() if message.text else ""
-  items = HALL_BOTS if hall_no == "1" else YONO_APPS
-
-  found = False
-  for item in items:
-    if target_name in item['name'].lower():
-      items.remove(item)
-      found = True
-      break
-
-  if found:
-    bot.send_message(message.chat.id, f"🗑️ **Successfully Deleted from Hall-{hall_no}!**", parse_mode="Markdown", reply_markup=get_main_keyboard())
-  else:
-    bot.send_message(message.chat.id, f"❌ Item nahi mila! Sahi naam type karein ya /cancel bhejein.")
 
 
 # --- TEXT BUTTON HANDLERS ---
@@ -513,6 +497,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Smart-Extractor Bot is running...")
+  print("Ultimate Rename-Manager Bot is running...")
   bot.infinity_polling()
-                         
+        
