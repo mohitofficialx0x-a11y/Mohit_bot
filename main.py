@@ -296,7 +296,7 @@ def get_app_name(message):
   msg = bot.send_message(
       admin_id,
       f"✅ Naam save ho gaya: **{app_name}**\n\n"
-      "🔗 **Ab iska link (Telegram link ya URL) bhejo:**\n"
+      "🔗 **Ab iska link bhejo (Aap direct Telegram link ya URL bhej sakte hain):**\n"
       "*(Example: https://t.me/theaura01/201)*\n"
       "*(Rukne ke liye /cancel bhejein)*",
       parse_mode="Markdown"
@@ -304,7 +304,7 @@ def get_app_name(message):
   bot.register_next_step_handler(msg, get_app_url)
 
 
-# --- STEP 2: GET APP URL & SAVE ---
+# --- STEP 2: GET APP URL & EXTRACT CLEAN LINK ---
 def get_app_url(message):
   if not is_admin(message.chat.id):
     return
@@ -313,19 +313,29 @@ def get_app_url(message):
     return
 
   admin_id = message.chat.id
-  url = message.text.strip()
+  raw_text = message.text.strip()
 
-  if not url.startswith("http"):
-    url = "https://" + url
+  # Smart Link Extractor (Agar user ne poora forward text bheja hai toh usme se link nikal lega)
+  extracted_url = ""
+  for word in raw_text.split():
+    if word.startswith("http://") or word.startswith("https://") or "t.me/" in word:
+      extracted_url = word.strip()
+      break
+
+  if not extracted_url:
+    # Agar koi http na mile toh jo likha hai wahi maan lo ya https jod do
+    extracted_url = raw_text.split()[0]
+    if not extracted_url.startswith("http"):
+      extracted_url = "https://" + extracted_url
 
   if admin_id in temp_admin_data and "name" in temp_admin_data[admin_id]:
     hall_no = temp_admin_data[admin_id]["hall"]
     name = temp_admin_data[admin_id]["name"]
 
     if hall_no == "1":
-      HALL_BOTS.append({"name": name, "url": url})
+      HALL_BOTS.append({"name": name, "url": extracted_url})
     else:
-      YONO_APPS.append({"name": name, "url": url})
+      YONO_APPS.append({"name": name, "url": extracted_url})
 
     del temp_admin_data[admin_id]
 
@@ -333,7 +343,7 @@ def get_app_url(message):
         admin_id,
         f"🎉 **Successfully Added to Hall-{hall_no}!**\n\n"
         f"📌 Name: `{name}`\n"
-        f"🔗 URL: `{url}`",
+        f"🔗 URL: `{extracted_url}`",
         parse_mode="Markdown",
         reply_markup=get_main_keyboard()
     )
@@ -496,6 +506,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Step-by-Step Hall Bot is running...")
+  print("Ultimate Smart-Link Bot is running...")
   bot.infinity_polling()
-      
+    
