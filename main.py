@@ -6,7 +6,7 @@ from telebot import types
 
 # --- CONFIGURATION ---
 TOKEN = "9176400558:AAGhsvTMerHCu5q8itt46w-DZCRV2uuu5qM"
-ADMIN_IDS = [8429424734, 8472943262]
+ADMIN_IDS = [8429424734, 8472943262]  # Tera aur doosra admin ID
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -40,31 +40,44 @@ def check_subscription(user_id):
   return False
 
 
-# --- START COMMAND (Friendly & Clean) ---
+# --- AUTOMATIC JOIN REQUEST APPROVER ---
+@bot.chat_join_request_handler()
+def auto_approve(message):
+  try:
+    bot.approve_chat_join_request(message.chat.id, message.from_user.id)
+    print(f"Auto-approved join request for user: {message.from_user.id}")
+  except Exception as e:
+    print(f"Auto-approve error: {e}")
+
+
+# --- MAIN MENU KEYBOARD (Niche wale buttons) ---
+def get_main_keyboard():
+  markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+  btn_panels = types.KeyboardButton("🚀 OTP & Earning Panels")
+  btn_contact = types.KeyboardButton("📞 Contact Admin")
+  btn_help = types.KeyboardButton("ℹ️ Help / Info")
+  markup.add(btn_panels, btn_contact)
+  markup.add(btn_help)
+  return markup
+
+
+# --- START COMMAND ---
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
   user_id = message.chat.id
   users.add(user_id)
 
   if check_subscription(user_id):
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    for bot_item in MY_BOTS:
-      markup.add(
-          types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"])
-      )
-
     success_text = (
         "🎉 **WELCOME BACK TO MOHIT FZX BOT** 🎉\n\n"
         "✅ Aapne private channel join kiya hua hai!\n\n"
-        "🤖 **MOHIT FZX OFFICIAL BOTS:**\n"
-        "Niche diye gaye buttons se apne pasandida bots access karein:\n\n"
-        "💀 POWERED BY MOHIT™ 🚀"
+        "👇 Niche menu se apne pasandida panels ya Contact Admin par click karein:"
     )
     bot.send_message(
-        user_id, success_text, parse_mode="Markdown", reply_markup=markup
+        user_id, success_text, parse_mode="Markdown", reply_markup=get_main_keyboard()
     )
   else:
-    # Pehli baar /start par friendly message bina 'Access Denied' ke
+    # Force Join Inline Buttons
     markup = types.InlineKeyboardMarkup(row_width=1)
     btn_channel = types.InlineKeyboardButton(
         "📢 JOIN PRIVATE CHANNEL", url=config["channel_link"]
@@ -77,7 +90,7 @@ def send_welcome(message):
     welcome_text = (
         "🔥 **WELCOME TO MOHIT FZX BOT** 🔥\n\n"
         "📢 Is bot ko use karne ke liye hamara **private channel** join karna zaroori hai!\n\n"
-        "1️⃣ Pehle **'📢 JOIN PRIVATE CHANNEL'** par click karke join karein.\n"
+        "1️⃣ Pehle **'📢 JOIN PRIVATE CHANNEL'** par click karke request bhejein.\n"
         "2️⃣ Phir **'🔄 CHECK MEMBERSHIP'** button dabayein."
     )
     bot.send_message(
@@ -94,39 +107,109 @@ def verify_join(call):
     bot.answer_callback_query(
         call.id, "✅ Private Channel Joined Successfully!", show_alert=False
     )
-
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    for bot_item in MY_BOTS:
-      markup.add(
-          types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"])
-      )
+    try:
+      bot.delete_message(user_id, call.message.message_id)
+    except:
+      pass
 
     success_text = (
         "🎉 **CONGRATULATIONS!** 🎉\n\n"
         "✅ Membership verified successfully!\n\n"
-        "🤖 **MOHIT FZX OFFICIAL BOTS:**\n"
-        "Niche diye gaye buttons se apne bots access karein:\n\n"
-        "💀 POWERED BY MOHIT™ 🚀"
+        "👇 Ab aap niche diye gaye menu buttons ka use kar sakte hain:"
     )
-    try:
-      bot.edit_message_text(
-          success_text,
-          chat_id=user_id,
-          message_id=call.message.message_id,
-          parse_mode="Markdown",
-          reply_markup=markup,
-      )
-    except:
-      bot.send_message(
-          user_id, success_text, parse_mode="Markdown", reply_markup=markup
-      )
+    bot.send_message(
+        user_id, success_text, parse_mode="Markdown", reply_markup=get_main_keyboard()
+    )
   else:
-    # Jab user join kiye bina check dabaye, tab aayega strict popup alert
     bot.answer_callback_query(
         call.id,
         "❌ Tumne abhi tak channel join nahi kiya hai!",
         show_alert=True,
     )
+
+
+# --- TEXT BUTTON HANDlers (Niche wale buttons ka action) ---
+@bot.message_handler(func=lambda message: True)
+def handle_text_messages(message):
+  user_id = message.chat.id
+  text = message.text
+  users.add(user_id)
+
+  # Agar user ne channel join nahi kiya aur kuch bhi bhej raha hai, toh pehle Force Join dikhao
+  if not check_subscription(user_id):
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    btn_channel = types.InlineKeyboardButton(
+        "📢 JOIN PRIVATE CHANNEL", url=config["channel_link"]
+    )
+    btn_check = types.InlineKeyboardButton(
+        "🔄 CHECK MEMBERSHIP", callback_data="check_join"
+    )
+    markup.add(btn_channel, btn_check)
+    bot.send_message(
+        user_id,
+        "❌ Pehle hamara private channel join karein!",
+        reply_markup=markup,
+    )
+    return
+
+  if text == "🚀 OTP & Earning Panels":
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    for bot_item in MY_BOTS:
+      markup.add(
+          types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"])
+      )
+    bot.send_message(
+        user_id,
+        "🤖 **MOHIT FZX OFFICIAL BOTS & PANELS:**\nNiche click karke access karein:",
+        reply_markup=markup,
+    )
+
+  elif text == "📞 Contact Admin":
+    msg = bot.send_message(
+        user_id,
+        "✍️ Apni problem ya message yahan type karke bhejo, main turant Admin tak pahuncha deta hoon:",
+    )
+    bot.register_next_step_handler(msg, forward_to_admin)
+
+  elif text == "ℹ️ Help / Info":
+    bot.send_message(
+        user_id,
+        "ℹ️ **Bot Info:**\n"
+        "Yeh bot Mohit FZX ka official directory bot hai.\n"
+        "Kisi bhi problem ke liye '📞 Contact Admin' par click karein.",
+        reply_markup=get_main_keyboard(),
+    )
+
+
+# --- DIRECT ADMIN MESSAGING SYSTEM ---
+def forward_to_admin(message):
+  user_id = message.chat.id
+  user_text = message.text
+  user_name = message.from_user.first_name
+
+  if user_text.startswith("/"):
+    return  # Agar user ne command bhej di toh ignore karo
+
+  admin_notification = (
+      f"📩 **NEW USER MESSAGE FOR ADMIN:**\n\n"
+      f"👤 From: {user_name} (`{user_id}`)\n"
+      f"💬 Message:\n{user_text}"
+  )
+
+  # Sabhi admins ko message forward kar do
+  for admin_id in ADMIN_IDS:
+    try:
+      markup = types.InlineKeyboardMarkup()
+      # Admin seedha reply button ya user ki ID copy kar sake
+      bot.send_message(admin_id, admin_notification, parse_mode="Markdown")
+    except Exception as e:
+      print(f"Failed to send to admin {admin_id}: {e}")
+
+  bot.send_message(
+      user_id,
+      "✅ Aapka message Admin ke paas bhej diya gaya hai! Jaldi hi aapko reply milega.",
+      reply_markup=get_main_keyboard(),
+  )
 
 
 # ================= ADMIN PANEL SECTION =================
@@ -221,6 +304,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Polished Bot is running...")
+  print("Ultimate Bot with Reply Keyboard & Contact Admin is running...")
   bot.infinity_polling()
-          
+      
