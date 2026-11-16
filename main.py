@@ -90,7 +90,7 @@ def cancel_operation(message):
     del temp_admin_data[user_id]
   bot.send_message(
       user_id,
-      "❌ **Operation Cancelled Successfully!**\nSari purani process radd kar di gayi hai[span_1](start_span)[span_1](end_span).",
+      "❌ **Operation Cancelled Successfully!**\nSari purani process radd kar di gayi hai.",
       parse_mode="Markdown",
       reply_markup=get_main_keyboard()
   )
@@ -296,7 +296,8 @@ def get_app_name(message):
   msg = bot.send_message(
       admin_id,
       f"✅ Naam save ho gaya: **{app_name}**\n\n"
-      "🔗 **Ab is app ka link (URL) bhejo:**\n"
+      "🔗 **Ab iska link (Telegram link ya URL) bhejo:**\n"
+      "*(Example: https://t.me/theaura01/201)*\n"
       "*(Rukne ke liye /cancel bhejein)*",
       parse_mode="Markdown"
   )
@@ -497,4 +498,4 @@ if __name__ == "__main__":
 
   print("Ultimate Step-by-Step Hall Bot is running...")
   bot.infinity_polling()
-                       
+      
