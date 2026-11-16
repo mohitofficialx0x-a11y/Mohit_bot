@@ -10,81 +10,107 @@ ADMIN_IDS = [8429424734, 8472943262]
 
 bot = telebot.TeleBot(TOKEN)
 
-# In-memory storage
+# In-memory storage & dynamic links directory
 users = set()
 config = {
     "channel_link": "https://t.me/+UyBmDcQRKORlNGI1",
     "reward_link": "https://t.me/Unlimited_otp_s_bot",
 }
 
+# Your Apps & Bot Directory Hub
+MY_APPS = [
+    {"name": "🚀 Unlimited OTP Bot", "url": "https://t.me/Unlimited_otp_s_bot"},
+    {"name": "💸 daily paisa kamae", "url": "https://yonogames365.com"},
+    {"name": "🔥 FZX Gaming Portal", "url": "https://yonogamef.vercel.app"},
+]
+
 def is_admin(user_id):
     return user_id in ADMIN_IDS
 
-# --- START COMMAND ---
+# --- START COMMAND (Clean Inline UI) ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.chat.id
     users.add(user_id)
     
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
-    btn_join = types.KeyboardButton("📢 JOIN CHANNEL")
-    btn_checked = types.KeyboardButton("✅ I HAVE JOINED")
-    markup.add(btn_join, btn_checked)
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    btn_channel = types.InlineKeyboardButton("📢 JOIN OUR CHANNEL", url=config["channel_link"])
+    btn_claim = types.InlineKeyboardButton("✅ I HAVE JOINED", callback_data="claim_reward")
+    markup.add(btn_channel, btn_claim)
     
     welcome_text = (
         "🔥 **WELCOME TO MOHIT FZX BOT** 🔥\n\n"
         "📢 Is bot ko use karne ke liye aapko hamara official channel join karna zaroori hai!\n\n"
-        "1️⃣ Pehle **'📢 JOIN CHANNEL'** dabakar channel join karein.\n"
-        "2️⃣ Phir **'✅ I HAVE JOINED'** dabakar apna reward link paayein!"
+        "👇 Niche diye gaye button par click karke channel join karein, phir 'I HAVE JOINED' dabayein:"
     )
     bot.send_message(user_id, welcome_text, parse_mode="Markdown", reply_markup=markup)
 
-# --- TEXT BUTTON HANDLER (FAST & NO GLITCH) ---
-@bot.message_handler(func=lambda message: True)
-def handle_text_messages(message):
-    user_id = message.chat.id
-    text = message.text
-    users.add(user_id)
+# --- CLAIM / REWARD HANDLER ---
+@bot.callback_query_handler(func=lambda call: call.data == "claim_reward")
+def claim_reward(call):
+    user_id = call.message.chat.id
+    bot.answer_callback_query(call.id, "✨ Access Granted!")
     
-    if text == "📢 JOIN CHANNEL":
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🔗 Click Here to Join Channel", url=config["channel_link"]))
-        bot.send_message(user_id, "👇 Is button par click karke channel join karein:", reply_markup=markup)
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    
+    # Add primary reward link
+    markup.add(types.InlineKeyboardButton(f"🎁 {config['reward_link'].split('/')[-1]} (Primary)", url=config["reward_link"]))
+    
+    # Add all other apps & bots from directory
+    for app in MY_APPS:
+        markup.add(types.InlineKeyboardButton(app["name"], url=app["url"]))
         
-    elif text == "✅ I HAVE JOINED":
-        markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🚀 OPEN REWARD / OTP PANEL", url=config["reward_link"]))
-        
-        success_text = (
-            "🎉 **CONGRATULATIONS!** 🎉\n\n"
-            "✅ Aapne channel join kar liya hai!\n\n"
-            "🎁 Yeh raha aapka special access link:\n"
-            f"👉 {config['reward_link']}\n\n"
-            "⚡ Enjoy karo aur apne doston ko bhi invite karo!\n"
-            "💀 POWERED BY MOHIT™ 🚀"
+    btn_back = types.InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_home")
+    markup.add(btn_back)
+    
+    claim_text = (
+        "🎉 **CONGRATULATIONS!** 🎉\n\n"
+        "✅ Aapne successfully channel join kar liya hai!\n\n"
+        "🌐 **MOHIT FZX OFFICIAL APPS & BOT DIRECTORY:**\n"
+        "Niche diye gaye buttons se aap hamare saare OTP panels aur gaming hubs access kar sakte hain:\n\n"
+        "💀 POWERED BY MOHIT™ 🚀"
+    )
+    try:
+        bot.edit_message_text(
+            claim_text,
+            chat_id=user_id,
+            message_id=call.message.message_id,
+            parse_mode="Markdown",
+            reply_markup=markup
         )
-        bot.send_message(user_id, success_text, parse_mode="Markdown", reply_markup=markup)
-        
-    elif text.startswith('/admin'):
-        if is_admin(user_id):
-            markup = types.InlineKeyboardMarkup(row_width=2)
-            btn_broadcast = types.InlineKeyboardButton("📢 Broadcast", callback_data="adm_broadcast")
-            btn_stats = types.InlineKeyboardButton("📊 Stats", callback_data="adm_stats")
-            btn_setchannel = types.InlineKeyboardButton("🔗 Set Channel", callback_data="adm_setchannel")
-            btn_setreward = types.InlineKeyboardButton("🎁 Set Reward", callback_data="adm_setreward")
-            markup.add(btn_broadcast, btn_stats, btn_setchannel, btn_setreward)
-            
-            bot.send_message(
-                user_id,
-                "⚡ **MOHIT FZX ADMIN CONTROL PANEL** ⚡\n\n"
-                "Niche diye gaye options se apne bot ko manage karein:",
-                parse_mode="Markdown",
-                reply_markup=markup
-            )
-        else:
-            bot.reply_to(message, "❌ Yeh command sirf admin ke liye hai!")
+    except:
+        bot.send_message(user_id, claim_text, parse_mode="Markdown", reply_markup=markup)
 
-# ================= ADMIN CALLBACKS =================
+@bot.callback_query_handler(func=lambda call: call.data == "back_home")
+def back_home(call):
+    try:
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+    except:
+        pass
+    send_welcome(call.message)
+
+# ================= ADMIN PANEL SECTION =================
+@bot.message_handler(commands=['admin'])
+def admin_panel(message):
+    user_id = message.chat.id
+    if is_admin(user_id):
+        markup = types.InlineKeyboardMarkup(row_width=2)
+        btn_broadcast = types.InlineKeyboardButton("📢 Broadcast", callback_data="adm_broadcast")
+        btn_stats = types.InlineKeyboardButton("📊 Stats", callback_data="adm_stats")
+        btn_setchannel = types.InlineKeyboardButton("🔗 Set Channel", callback_data="adm_setchannel")
+        btn_setreward = types.InlineKeyboardButton("🎁 Set Reward", callback_data="adm_setreward")
+        markup.add(btn_broadcast, btn_stats, btn_setchannel, btn_setreward)
+        
+        bot.send_message(
+            user_id,
+            "⚡ **MOHIT FZX ADMIN CONTROL PANEL** ⚡\n\n"
+            "Niche diye gaye options se apne bot ko manage karein:",
+            parse_mode="Markdown",
+            reply_markup=markup
+        )
+    else:
+        bot.reply_to(message, "❌ Yeh command sirf admin ke liye hai!")
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith("adm_"))
 def admin_callbacks(call):
     if not is_admin(call.message.chat.id):
@@ -139,7 +165,7 @@ def process_set_reward(message):
     if not is_admin(message.chat.id):
         return
     config["reward_link"] = message.text.strip()
-    bot.send_message(message.chat.id, f"✅ Reward link updated to:\n`{config['reward_link']}`", parse_png=False, parse_mode="Markdown")
+    bot.send_message(message.chat.id, f"✅ Reward link updated to:\n`{config['reward_link']}`", parse_mode="Markdown")
 
 # --- FLASK SERVER ---
 app = Flask(__name__)
@@ -156,6 +182,6 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     
-    print("Master Bot with Reply Keyboard is running...")
+    print("Master Bot with Full App Directory Hub is running...")
     bot.infinity_polling()
     
