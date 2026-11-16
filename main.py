@@ -281,12 +281,12 @@ def hall_action_callbacks(call):
 def get_app_name(message):
   if not is_admin(message.chat.id):
     return
-  if message.text.startswith("/cancel"):
+  if message.text and message.text.startswith("/cancel"):
     cancel_operation(message)
     return
 
   admin_id = message.chat.id
-  app_name = message.text.strip()
+  app_name = message.text.strip() if message.text else "App"
   
   if admin_id not in temp_admin_data:
     temp_admin_data[admin_id] = {}
@@ -296,37 +296,44 @@ def get_app_name(message):
   msg = bot.send_message(
       admin_id,
       f"✅ Naam save ho gaya: **{app_name}**\n\n"
-      "🔗 **Ab iska link bhejo (Aap direct Telegram link ya URL bhej sakte hain):**\n"
-      "*(Example: https://t.me/theaura01/201)*\n"
+      "🔗 **Ab iska link bhejo (Aap direct Telegram link ya forward text bhej sakte hain):**\n"
       "*(Rukne ke liye /cancel bhejein)*",
       parse_mode="Markdown"
   )
   bot.register_next_step_handler(msg, get_app_url)
 
 
-# --- STEP 2: GET APP URL & EXTRACT CLEAN LINK ---
+# --- STEP 2: GET APP URL & EXTRACT CLEAN LINK (Advanced Parser) ---
 def get_app_url(message):
   if not is_admin(message.chat.id):
     return
-  if message.text.startswith("/cancel"):
+  
+  text_to_check = message.text or message.caption or ""
+  if text_to_check.startswith("/cancel"):
     cancel_operation(message)
     return
 
   admin_id = message.chat.id
-  raw_text = message.text.strip()
-
-  # Smart Link Extractor (Agar user ne poora forward text bheja hai toh usme se link nikal lega)
+  
+  # Smart URL Extractor: Poore text/forward mein se https ya t.me wala link dhoond lega
   extracted_url = ""
-  for word in raw_text.split():
-    if word.startswith("http://") or word.startswith("https://") or "t.me/" in word:
+  words = text_to_check.split()
+  for word in words:
+    if "http://" in word or "https://" in word or "t.me/" in word:
       extracted_url = word.strip()
       break
 
+  # Agar direct link nahi mila toh pehla word utha lo
+  if not extracted_url and words:
+    extracted_url = words[0].strip()
+
   if not extracted_url:
-    # Agar koi http na mile toh jo likha hai wahi maan lo ya https jod do
-    extracted_url = raw_text.split()[0]
-    if not extracted_url.startswith("http"):
-      extracted_url = "https://" + extracted_url
+    msg = bot.send_message(admin_id, "❌ Koi valid link nahi mila! Kripya dobara link bhejein (ya /cancel dabayein):")
+    bot.register_next_step_handler(msg, get_app_url)
+    return
+
+  if not extracted_url.startswith("http"):
+    extracted_url = "https://" + extracted_url
 
   if admin_id in temp_admin_data and "name" in temp_admin_data[admin_id]:
     hall_no = temp_admin_data[admin_id]["hall"]
@@ -354,7 +361,7 @@ def get_app_url(message):
 def process_broadcast(message):
   if not is_admin(message.chat.id):
     return
-  if message.text.startswith("/cancel"):
+  if message.text and message.text.startswith("/cancel"):
     cancel_operation(message)
     return
 
@@ -376,11 +383,11 @@ def process_broadcast(message):
 def process_delete_from_hall(message, hall_no):
   if not is_admin(message.chat.id):
     return
-  if message.text.startswith("/cancel"):
+  if message.text and message.text.startswith("/cancel"):
     cancel_operation(message)
     return
 
-  target_name = message.text.strip().lower()
+  target_name = message.text.strip().lower() if message.text else ""
   items = HALL_BOTS if hall_no == "1" else YONO_APPS
 
   found = False
@@ -403,7 +410,7 @@ def handle_text_messages(message):
   text = message.text
   users.add(user_id)
 
-  if text.startswith("/cancel"):
+  if text and text.startswith("/cancel"):
     cancel_operation(message)
     return
 
@@ -466,14 +473,14 @@ def handle_text_messages(message):
 # --- DIRECT ADMIN MESSAGING SYSTEM ---
 def forward_to_admin(message):
   user_id = message.chat.id
-  if message.text.startswith("/cancel"):
+  if message.text and message.text.startswith("/cancel"):
     cancel_operation(message)
     return
 
   user_text = message.text
   user_name = message.from_user.first_name
 
-  if user_text.startswith("/"):
+  if not user_text or user_text.startswith("/"):
     return
 
   admin_notification = (
@@ -491,7 +498,7 @@ def forward_to_admin(message):
   bot.send_message(user_id, f"✅ Aapka message Admin ({ADMIN_USERNAME}) ke paas bhej diya gaya hai!", reply_markup=get_main_keyboard())
 
 
-# --- FLASK SERVER ---
+# --- Flask Server ---
 app = Flask(__name__)
 
 @app.route("/")
@@ -506,6 +513,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Smart-Link Bot is running...")
+  print("Ultimate Smart-Extractor Bot is running...")
   bot.infinity_polling()
-    
+                         
