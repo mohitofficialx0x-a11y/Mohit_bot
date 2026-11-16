@@ -18,13 +18,12 @@ config = {
     "channel_link": "https://t.me/+UyBmDcQRKORlNGI1",  # Channel join invite link
 }
 
-# Your exact Telegram bots directory
-MY_BOTS = [
+# Halls Storage (Categories)
+HALL_BOTS = [
     {"name": "🚀 Unlimited OTP Bot", "url": "https://t.me/Unlimited_otp_s_bot"},
     {"name": "daily paisa kamae 💸", "url": "https://t.me/DailycheckIn_009_bot"},
 ]
 
-# Your Exact Yono Apps Directory Hub
 YONO_APPS = [
     {"name": "🔥 🌟 OFFICIAL WEBSITE MARKET 🌟 🔥", "url": "https://yono-apps-ka-marketgvd.vercel.app/"},
     {"name": "📢 Join Telegram Channel", "url": "https://t.me/THEAURA01"},
@@ -147,19 +146,18 @@ def verify_join(call):
     )
 
 
-# ================= ADMIN PANEL SECTION (Strict Priority) =================
+# ================= ADMIN PANEL & HALL MANAGER =================
 @bot.message_handler(commands=["admin"])
 def admin_panel(message):
   user_id = message.chat.id
   if is_admin(user_id):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    btn_broadcast = types.InlineKeyboardButton(
-        "📢 Broadcast", callback_data="adm_broadcast"
-    )
-    btn_stats = types.InlineKeyboardButton(
-        "📊 Stats", callback_data="adm_stats"
-    )
+    btn_broadcast = types.InlineKeyboardButton("📢 Broadcast", callback_data="adm_broadcast")
+    btn_stats = types.InlineKeyboardButton("📊 Stats", callback_data="adm_stats")
+    btn_addapp = types.InlineKeyboardButton("➕ Add to Hall", callback_data="adm_addapp")
+    btn_delapp = types.InlineKeyboardButton("🗑️ Delete from Hall", callback_data="adm_delapp")
     markup.add(btn_broadcast, btn_stats)
+    markup.add(btn_addapp, btn_delapp)
 
     bot.send_message(
         user_id,
@@ -196,6 +194,53 @@ def admin_callbacks(call):
     )
     bot.register_next_step_handler(msg, process_broadcast)
 
+  elif data == "adm_addapp":
+    bot.answer_callback_query(call.id)
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        types.InlineKeyboardButton("Hall-1 = 🚀 OTP & Earning Panels", callback_data="hall_add_1"),
+        types.InlineKeyboardButton("Hall-2 = 💥 Need Yono Apps?", callback_data="hall_add_2")
+    )
+    bot.send_message(admin_chat_id, "😂 **Please select your Hall (Category):**", parse_mode="Markdown", reply_markup=markup)
+
+  elif data == "adm_delapp":
+    bot.answer_callback_query(call.id)
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        types.InlineKeyboardButton("Hall-1 = 🚀 OTP & Earning Panels", callback_data="hall_del_1"),
+        types.InlineKeyboardButton("Hall-2 = 💥 Need Yono Apps?", callback_data="hall_del_2")
+    )
+    bot.send_message(admin_chat_id, "🗑️ **Kis Hall se item delete karna hai select karein:**", parse_mode="Markdown", reply_markup=markup)
+
+  elif data.startswith("hall_add_"):
+    hall_no = data.split("_")[-1]
+    bot.answer_callback_query(call.id)
+    msg = bot.send_message(
+        admin_chat_id,
+        f"📝 **Hall-{hall_no} ke liye naya item bhejo:**\n\n"
+        "Format: `Name | Link`\n"
+        "Example: `🔥 New App | https://example.com`",
+        parse_mode="Markdown"
+    )
+    bot.register_next_step_handler(msg, lambda m: process_add_to_hall(m, hall_no))
+
+  elif data.startswith("hall_del_"):
+    hall_no = data.split("_")[-1]
+    bot.answer_callback_query(call.id)
+    
+    # List dikhao delete karne ke liye
+    items = HALL_BOTS if hall_no == "1" else YONO_APPS
+    if not items:
+      bot.send_message(admin_chat_id, f"❌ Hall-{hall_no} bilkul khali hai!")
+      return
+
+    text = f"🗑️ **Hall-{hall_no} ke items ki list (Delete karne ke liye exact naam bhejo):**\n\n"
+    for idx, item in enumerate(items):
+      text += f"{idx+1}. {item['name']}\n"
+    
+    msg = bot.send_message(admin_chat_id, text, parse_mode="Markdown")
+    bot.register_next_step_handler(msg, lambda m: process_delete_from_hall(m, hall_no))
+
 
 def process_broadcast(message):
   if not is_admin(message.chat.id):
@@ -207,18 +252,54 @@ def process_broadcast(message):
   bot.send_message(message.chat.id, "🚀 Broadcast shuru ho gaya hai...")
   for uid in users:
     try:
-      bot.send_message(
-          uid, f"📢 **ANNOUNCEMENT:**\n\n{text}", parse_mode="Markdown"
-      )
+      bot.send_message(uid, f"📢 **ANNOUNCEMENT:**\n\n{text}", parse_mode="Markdown")
       success += 1
     except:
       fail += 1
 
-  bot.send_message(
-      message.chat.id,
-      f"✅ **Broadcast Done!**\nSuccessful: `{success}` | Failed: `{fail}`",
-      parse_mode="Markdown",
-  )
+  bot.send_message(message.chat.id, f"✅ **Broadcast Done!**\nSuccessful: `{success}` | Failed: `{fail}`", parse_mode="Markdown")
+
+
+def process_add_to_hall(message, hall_no):
+  if not is_admin(message.chat.id):
+    return
+  text = message.text.strip()
+  if "|" not in text:
+    bot.send_message(message.chat.id, "❌ Galat format! Kripya `Name | Link` format me bhejein.")
+    return
+
+  try:
+    name, url = text.split("|", 1)
+    name = name.strip()
+    url = url.strip()
+
+    if hall_no == "1":
+      HALL_BOTS.append({"name": name, "url": url})
+    else:
+      YONO_APPS.append({"name": name, "url": url})
+
+    bot.send_message(message.chat.id, f"✅ **Successfully Added to Hall-{hall_no}!**\n📌 `{name}`", parse_mode="Markdown")
+  except Exception as e:
+    bot.send_message(message.chat.id, f"❌ Error: {e}")
+
+
+def process_delete_from_hall(message, hall_no):
+  if not is_admin(message.chat.id):
+    return
+  target_name = message.text.strip().lower()
+  items = HALL_BOTS if hall_no == "1" else YONO_APPS
+
+  found = False
+  for item in items:
+    if target_name in item['name'].lower():
+      items.remove(item)
+      found = True
+      break
+
+  if found:
+    bot.send_message(message.chat.id, f"🗑️ **Successfully Deleted from Hall-{hall_no}!**", parse_mode="Markdown")
+  else:
+    bot.send_message(message.chat.id, f"❌ Item nahi mila! Exact naam match karke dobara try karein.")
 
 
 # --- TEXT BUTTON HANDLERS ---
@@ -228,34 +309,19 @@ def handle_text_messages(message):
   text = message.text
   users.add(user_id)
 
-  # Force Join check for normal messages
   if not check_subscription(user_id):
     markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_channel = types.InlineKeyboardButton(
-        "📢 JOIN PRIVATE CHANNEL", url=config["channel_link"]
-    )
-    btn_check = types.InlineKeyboardButton(
-        "🔄 CHECK MEMBERSHIP", callback_data="check_join"
-    )
+    btn_channel = types.InlineKeyboardButton("📢 JOIN PRIVATE CHANNEL", url=config["channel_link"])
+    btn_check = types.InlineKeyboardButton("🔄 CHECK MEMBERSHIP", callback_data="check_join")
     markup.add(btn_channel, btn_check)
-    bot.send_message(
-        user_id,
-        "❌ Pehle hamara private channel join karein!",
-        reply_markup=markup,
-    )
+    bot.send_message(user_id, "❌ Pehle hamara private channel join karein!", reply_markup=markup)
     return
 
   if text == "🚀 OTP & Earning Panels":
     markup = types.InlineKeyboardMarkup(row_width=1)
-    for bot_item in MY_BOTS:
-      markup.add(
-          types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"])
-      )
-    bot.send_message(
-        user_id,
-        "🤖 **MOHIT FZX OFFICIAL BOTS & PANELS:**\nNiche click karke access karein:",
-        reply_markup=markup,
-    )
+    for bot_item in HALL_BOTS:
+      markup.add(types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"]))
+    bot.send_message(user_id, "🤖 **Hall-1 (OTP & Earning Panels):**\nNiche click karke access karein:", reply_markup=markup)
 
   elif text == "💥 Need Yono Apps?":
     markup = types.InlineKeyboardMarkup(row_width=1)
@@ -263,23 +329,18 @@ def handle_text_messages(message):
       markup.add(types.InlineKeyboardButton(app["name"], url=app["url"]))
     
     yono_text = (
-        "💥 *Welcome to Yono Apps Ka Market!* 💥\n\n"
+        "💥 *Welcome to Yono Apps Ka Market!* (Hall-2) 💥\n\n"
         "Yahan aapko sabhi latest aur verified Yono games, bonus offers aur official links milenge.\n\n"
         "👇 *Official Social & Direct Download Links:*"
     )
-    bot.send_message(
-        user_id,
-        yono_text,
-        parse_mode="Markdown",
-        reply_markup=markup
-    )
+    bot.send_message(user_id, yono_text, parse_mode="Markdown", reply_markup=markup)
 
   elif text == "📞 Contact Admin":
     contact_text = (
-        f"📞 **CONTACT ADMIN SUPPORT:**\n\n"
+        f"📞 **CONTACT ADMIN SUPPORT (Hall-3):**\n\n"
         f"Aap seedha hamare official admin se contact kar sakte hain:\n"
         f"👉 Admin Username: **{ADMIN_USERNAME}**\n\n"
-        f"✍️ Ya fir apni problem ya message yahan niche type karke bhejein, main turant admin tak bhej dunga:"
+        f"✍️ Ya fir apni problem yahan type karke bhejein:"
     )
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("💬 Message Admin Direct", url=f"https://t.me/FZXMOHIT1"))
@@ -290,7 +351,7 @@ def handle_text_messages(message):
   elif text == "ℹ️ Help / Info":
     bot.send_message(
         user_id,
-        "ℹ️ **Bot Info:**\n"
+        "ℹ️ **Bot Info (Hall-4):**\n"
         "Yeh bot Mohit FZX ka official directory bot hai.\n"
         "Kisi bhi problem ke liye '📞 Contact Admin' par click karein.",
         reply_markup=get_main_keyboard(),
@@ -318,31 +379,24 @@ def forward_to_admin(message):
     except Exception as e:
       print(f"Failed to send to admin {admin_id}: {e}")
 
-  bot.send_message(
-      user_id,
-      f"✅ Aapka message Admin ({ADMIN_USERNAME}) ke paas bhej diya gaya hai! Jaldi hi reply milega.",
-      reply_markup=get_main_keyboard(),
-  )
+  bot.send_message(user_id, f"✅ Aapka message Admin ({ADMIN_USERNAME}) ke paas bhej diya gaya hai!", reply_markup=get_main_keyboard())
 
 
 # --- FLASK SERVER ---
 app = Flask(__name__)
 
-
 @app.route("/")
 def index():
   return "Bot is active and running 24/7!"
-
 
 def run_flask():
   port = int(os.environ.get("PORT", 10000))
   app.run(host="0.0.0.0", port=port)
 
-
 if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Bot with Real Yono Market & Admin Fix is running...")
+  print("Ultimate Hall-Based Bot is running...")
   bot.infinity_polling()
     
