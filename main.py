@@ -79,6 +79,18 @@ def get_main_keyboard():
   return markup
 
 
+# --- CANCEL COMMAND (Global Reset) ---
+@bot.message_handler(commands=["cancel"])
+def cancel_operation(message):
+  user_id = message.chat.id
+  bot.send_message(
+      user_id,
+      "❌ **Operation Cancelled Successfully!**\nSari purani process radd kar di gayi hai.",
+      parse_mode="Markdown",
+      reply_markup=get_main_keyboard()
+  )
+
+
 # --- START COMMAND ---
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
@@ -146,7 +158,7 @@ def verify_join(call):
     )
 
 
-# ================= ADMIN PANEL & HALL MANAGER =================
+# ================= ADMIN PANEL & HALL MANAGER (Fixed Callbacks) =================
 @bot.message_handler(commands=["admin"])
 def admin_panel(message):
   user_id = message.chat.id
@@ -162,7 +174,8 @@ def admin_panel(message):
     bot.send_message(
         user_id,
         "⚡ **MOHIT FZX ADMIN CONTROL PANEL** ⚡\n\n"
-        "Niche diye gaye options se apne bot ko manage karein:",
+        "Niche diye gaye options se apne bot ko manage karein:\n"
+        "*(Kisi bhi waqt rukne ke liye /cancel bhejein)*",
         parse_mode="Markdown",
         reply_markup=markup,
     )
@@ -170,8 +183,8 @@ def admin_panel(message):
     bot.reply_to(message, "❌ Yeh command sirf admin ke liye hai!")
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("adm_"))
-def admin_callbacks(call):
+@bot.callback_query_handler(func=lambda call: call.data in ["adm_stats", "adm_broadcast", "adm_addapp", "adm_delapp"])
+def admin_main_callbacks(call):
   if not is_admin(call.message.chat.id):
     return
 
@@ -190,7 +203,7 @@ def admin_callbacks(call):
     bot.answer_callback_query(call.id)
     msg = bot.send_message(
         admin_chat_id,
-        "📢 Saare users ko kya bhejna hai? Message type karke bhejo:",
+        "📢 Saare users ko kya bhejna hai? Message type karke bhejo:\n*(Rukne ke liye /cancel bhejein)*",
     )
     bot.register_next_step_handler(msg, process_broadcast)
 
@@ -212,39 +225,70 @@ def admin_callbacks(call):
     )
     bot.send_message(admin_chat_id, "🗑️ **Kis Hall se item delete karna hai select karein:**", parse_mode="Markdown", reply_markup=markup)
 
-  elif data.startswith("hall_add_"):
-    hall_no = data.split("_")[-1]
-    bot.answer_callback_query(call.id)
+
+@bot.callback_query_handler(func=lambda call: call.data in ["hall_add_1", "hall_add_2", "hall_del_1", "hall_del_2"])
+def hall_action_callbacks(call):
+  if not is_admin(call.message.chat.id):
+    return
+
+  admin_chat_id = call.message.chat.id
+  data = call.data
+  bot.answer_callback_query(call.id)
+
+  if data == "hall_add_1":
     msg = bot.send_message(
         admin_chat_id,
-        f"📝 **Hall-{hall_no} ke liye naya item bhejo:**\n\n"
+        "📝 **Hall-1 ke liye naya item bhejo:**\n\n"
         "Format: `Name | Link`\n"
-        "Example: `🔥 New App | https://example.com`",
+        "Example: `🔥 New Bot | https://t.me/example_bot`\n"
+        "*(Rukne ke liye /cancel bhejein)*",
         parse_mode="Markdown"
     )
-    bot.register_next_step_handler(msg, lambda m: process_add_to_hall(m, hall_no))
+    bot.register_next_step_handler(msg, lambda m: process_add_to_hall(m, "1"))
 
-  elif data.startswith("hall_del_"):
-    hall_no = data.split("_")[-1]
-    bot.answer_callback_query(call.id)
-    
-    # List dikhao delete karne ke liye
-    items = HALL_BOTS if hall_no == "1" else YONO_APPS
+  elif data == "hall_add_2":
+    msg = bot.send_message(
+        admin_chat_id,
+        "📝 **Hall-2 ke liye naya app bhejo:**\n\n"
+        "Format: `Name | Link`\n"
+        "Example: `11. 💰 New Yono | https://example.com`\n"
+        "*(Rukne ke liye /cancel bhejein)*",
+        parse_mode="Markdown"
+    )
+    bot.register_next_step_handler(msg, lambda m: process_add_to_hall(m, "2"))
+
+  elif data == "hall_del_1":
+    items = HALL_BOTS
     if not items:
-      bot.send_message(admin_chat_id, f"❌ Hall-{hall_no} bilkul khali hai!")
+      bot.send_message(admin_chat_id, "❌ Hall-1 bilkul khali hai!")
       return
-
-    text = f"🗑️ **Hall-{hall_no} ke items ki list (Delete karne ke liye exact naam bhejo):**\n\n"
+    text = "🗑️ **Hall-1 ke items ki list (Exact naam type karke bhejo delete karne ke liye):**\n\n"
     for idx, item in enumerate(items):
       text += f"{idx+1}. {item['name']}\n"
-    
+    text += "\n*(Rukne ke liye /cancel bhejein)*"
     msg = bot.send_message(admin_chat_id, text, parse_mode="Markdown")
-    bot.register_next_step_handler(msg, lambda m: process_delete_from_hall(m, hall_no))
+    bot.register_next_step_handler(msg, lambda m: process_delete_from_hall(m, "1"))
+
+  elif data == "hall_del_2":
+    items = YONO_APPS
+    if not items:
+      bot.send_message(admin_chat_id, "❌ Hall-2 bilkul khali hai!")
+      return
+    text = "🗑️ **Hall-2 ke items ki list (Exact naam type karke bhejo delete karne ke liye):**\n\n"
+    for idx, item in enumerate(items):
+      text += f"{idx+1}. {item['name']}\n"
+    text += "\n*(Rukne ke liye /cancel bhejein)*"
+    msg = bot.send_message(admin_chat_id, text, parse_mode="Markdown")
+    bot.register_next_step_handler(msg, lambda m: process_delete_from_hall(m, "2"))
 
 
 def process_broadcast(message):
   if not is_admin(message.chat.id):
     return
+  if message.text.startswith("/cancel"):
+    cancel_operation(message)
+    return
+
   text = message.text
   success = 0
   fail = 0
@@ -257,15 +301,19 @@ def process_broadcast(message):
     except:
       fail += 1
 
-  bot.send_message(message.chat.id, f"✅ **Broadcast Done!**\nSuccessful: `{success}` | Failed: `{fail}`", parse_mode="Markdown")
+  bot.send_message(message.chat.id, f"✅ **Broadcast Done!**\nSuccessful: `{success}` | Failed: `{fail}`", reply_markup=get_main_keyboard())
 
 
 def process_add_to_hall(message, hall_no):
   if not is_admin(message.chat.id):
     return
+  if message.text.startswith("/cancel"):
+    cancel_operation(message)
+    return
+
   text = message.text.strip()
   if "|" not in text:
-    bot.send_message(message.chat.id, "❌ Galat format! Kripya `Name | Link` format me bhejein.")
+    bot.send_message(message.chat.id, "❌ Galat format! Kripya `Name | Link` format me bhejein (ya /cancel dabayein).")
     return
 
   try:
@@ -278,7 +326,7 @@ def process_add_to_hall(message, hall_no):
     else:
       YONO_APPS.append({"name": name, "url": url})
 
-    bot.send_message(message.chat.id, f"✅ **Successfully Added to Hall-{hall_no}!**\n📌 `{name}`", parse_mode="Markdown")
+    bot.send_message(message.chat.id, f"✅ **Successfully Added to Hall-{hall_no}!**\n📌 `{name}`", parse_mode="Markdown", reply_markup=get_main_keyboard())
   except Exception as e:
     bot.send_message(message.chat.id, f"❌ Error: {e}")
 
@@ -286,6 +334,10 @@ def process_add_to_hall(message, hall_no):
 def process_delete_from_hall(message, hall_no):
   if not is_admin(message.chat.id):
     return
+  if message.text.startswith("/cancel"):
+    cancel_operation(message)
+    return
+
   target_name = message.text.strip().lower()
   items = HALL_BOTS if hall_no == "1" else YONO_APPS
 
@@ -297,9 +349,9 @@ def process_delete_from_hall(message, hall_no):
       break
 
   if found:
-    bot.send_message(message.chat.id, f"🗑️ **Successfully Deleted from Hall-{hall_no}!**", parse_mode="Markdown")
+    bot.send_message(message.chat.id, f"🗑️ **Successfully Deleted from Hall-{hall_no}!**", parse_mode="Markdown", reply_markup=get_main_keyboard())
   else:
-    bot.send_message(message.chat.id, f"❌ Item nahi mila! Exact naam match karke dobara try karein.")
+    bot.send_message(message.chat.id, f"❌ Item nahi mila! Sahi naam type karein ya /cancel bhejein.")
 
 
 # --- TEXT BUTTON HANDLERS ---
@@ -308,6 +360,10 @@ def handle_text_messages(message):
   user_id = message.chat.id
   text = message.text
   users.add(user_id)
+
+  if text.startswith("/cancel"):
+    cancel_operation(message)
+    return
 
   if not check_subscription(user_id):
     markup = types.InlineKeyboardMarkup(row_width=1)
@@ -340,7 +396,8 @@ def handle_text_messages(message):
         f"📞 **CONTACT ADMIN SUPPORT (Hall-3):**\n\n"
         f"Aap seedha hamare official admin se contact kar sakte hain:\n"
         f"👉 Admin Username: **{ADMIN_USERNAME}**\n\n"
-        f"✍️ Ya fir apni problem yahan type karke bhejein:"
+        f"✍️ Ya fir apni problem yahan type karke bhejein:\n"
+        f"*(Rukne ke liye /cancel bhejein)*"
     )
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("💬 Message Admin Direct", url=f"https://t.me/FZXMOHIT1"))
@@ -361,6 +418,10 @@ def handle_text_messages(message):
 # --- DIRECT ADMIN MESSAGING SYSTEM ---
 def forward_to_admin(message):
   user_id = message.chat.id
+  if message.text.startswith("/cancel"):
+    cancel_operation(message)
+    return
+
   user_text = message.text
   user_name = message.from_user.first_name
 
@@ -397,6 +458,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Hall-Based Bot is running...")
+  print("Ultimate Hall-Based Bot with Cancel Command is running...")
   bot.infinity_polling()
-    
+  
