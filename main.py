@@ -10,24 +10,22 @@ ADMIN_IDS = [8429424734, 8472943262]
 
 bot = telebot.TeleBot(TOKEN)
 
-# In-memory storage & dynamic links directory
+# In-memory storage & your exact bots directory
 users = set()
 config = {
     "channel_link": "https://t.me/+UyBmDcQRKORlNGI1",
-    "reward_link": "https://t.me/Unlimited_otp_s_bot",
 }
 
-# Your Apps & Bot Directory Hub
-MY_APPS = [
+# Your exact Telegram bots directory
+MY_BOTS = [
     {"name": "🚀 Unlimited OTP Bot", "url": "https://t.me/Unlimited_otp_s_bot"},
-    {"name": "💸 daily paisa kamae", "url": "https://yonogames365.com"},
-    {"name": "🔥 FZX Gaming Portal", "url": "https://yonogamef.vercel.app"},
+    {"name": "daily paisa kamae 💸", "url": "https://t.me/DailycheckIn_009_bot"},
 ]
 
 def is_admin(user_id):
     return user_id in ADMIN_IDS
 
-# --- START COMMAND (Clean Inline UI) ---
+# --- START COMMAND ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.chat.id
@@ -49,16 +47,13 @@ def send_welcome(message):
 @bot.callback_query_handler(func=lambda call: call.data == "claim_reward")
 def claim_reward(call):
     user_id = call.message.chat.id
-    bot.answer_callback_query(call.id, "✨ Access Granted!")
+    bot.answer_callback_query(call.id, "✨ Success!")
     
     markup = types.InlineKeyboardMarkup(row_width=1)
     
-    # Add primary reward link
-    markup.add(types.InlineKeyboardButton(f"🎁 {config['reward_link'].split('/')[-1]} (Primary)", url=config["reward_link"]))
-    
-    # Add all other apps & bots from directory
-    for app in MY_APPS:
-        markup.add(types.InlineKeyboardButton(app["name"], url=app["url"]))
+    # Add your exact Telegram bots with custom texts
+    for bot_item in MY_BOTS:
+        markup.add(types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"]))
         
     btn_back = types.InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_home")
     markup.add(btn_back)
@@ -66,8 +61,8 @@ def claim_reward(call):
     claim_text = (
         "🎉 **CONGRATULATIONS!** 🎉\n\n"
         "✅ Aapne successfully channel join kar liya hai!\n\n"
-        "🌐 **MOHIT FZX OFFICIAL APPS & BOT DIRECTORY:**\n"
-        "Niche diye gaye buttons se aap hamare saare OTP panels aur gaming hubs access kar sakte hain:\n\n"
+        "🤖 **MOHIT FZX OFFICIAL BOTS:**\n"
+        "Niche diye gaye buttons se aap hamare saare bots access kar sakte hain:\n\n"
         "💀 POWERED BY MOHIT™ 🚀"
     )
     try:
@@ -98,8 +93,7 @@ def admin_panel(message):
         btn_broadcast = types.InlineKeyboardButton("📢 Broadcast", callback_data="adm_broadcast")
         btn_stats = types.InlineKeyboardButton("📊 Stats", callback_data="adm_stats")
         btn_setchannel = types.InlineKeyboardButton("🔗 Set Channel", callback_data="adm_setchannel")
-        btn_setreward = types.InlineKeyboardButton("🎁 Set Reward", callback_data="adm_setreward")
-        markup.add(btn_broadcast, btn_stats, btn_setchannel, btn_setreward)
+        markup.add(btn_broadcast, btn_stats, btn_setchannel)
         
         bot.send_message(
             user_id,
@@ -132,11 +126,6 @@ def admin_callbacks(call):
         bot.answer_callback_query(call.id)
         msg = bot.send_message(admin_chat_id, f"🔗 Naya Channel Link bhejo (Current: `{config['channel_link']}`):", parse_mode="Markdown")
         bot.register_next_step_handler(msg, process_set_channel)
-        
-    elif data == "adm_setreward":
-        bot.answer_callback_query(call.id)
-        msg = bot.send_message(admin_chat_id, f"🎁 Naya Reward Link bhejo (Current: `{config['reward_link']}`):", parse_mode="Markdown")
-        bot.register_next_step_handler(msg, process_set_reward)
 
 def process_broadcast(message):
     if not is_admin(message.chat.id):
@@ -161,12 +150,6 @@ def process_set_channel(message):
     config["channel_link"] = message.text.strip()
     bot.send_message(message.chat.id, f"✅ Channel link updated to:\n`{config['channel_link']}`", parse_mode="Markdown")
 
-def process_set_reward(message):
-    if not is_admin(message.chat.id):
-        return
-    config["reward_link"] = message.text.strip()
-    bot.send_message(message.chat.id, f"✅ Reward link updated to:\n`{config['reward_link']}`", parse_mode="Markdown")
-
 # --- FLASK SERVER ---
 app = Flask(__name__)
 
@@ -182,6 +165,6 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask)
     flask_thread.start()
     
-    print("Master Bot with Full App Directory Hub is running...")
+    print("Master Bot with Exact Bot Links is running...")
     bot.infinity_polling()
-    
+                         
