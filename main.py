@@ -1,5 +1,7 @@
 import os
 import threading
+import time
+import requests
 from flask import Flask
 import telebot
 from telebot import types
@@ -21,7 +23,7 @@ config = {
 # Temporary storage for step-by-step renaming
 temp_admin_data = {}
 
-# Halls Storage (Tera OTP & Earning Panel wapas apni jagah par!)
+# Halls Storage
 HALL_BOTS = [
     {"name": "🚀 Unlimited OTP Bot", "url": "https://t.me/Unlimited_otp_s_bot"},
     {"name": "daily paisa kamae 💸", "url": "https://t.me/DailycheckIn_009_bot"},
@@ -70,7 +72,7 @@ def auto_approve(message):
     print(f"Auto-approve error: {e}")
 
 
-# --- MAIN MENU KEYBOARD (Niche wale permanent buttons) ---
+# --- MAIN MENU KEYBOARD ---
 def get_main_keyboard():
   markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
   btn_panels = types.KeyboardButton("🚀 OTP & Earning Panels")
@@ -82,7 +84,7 @@ def get_main_keyboard():
   return markup
 
 
-# --- CANCEL COMMAND (Global Reset) ---
+# --- CANCEL COMMAND ---
 @bot.message_handler(commands=["cancel"])
 def cancel_operation(message):
   user_id = message.chat.id
@@ -90,7 +92,7 @@ def cancel_operation(message):
     del temp_admin_data[user_id]
   bot.send_message(
       user_id,
-      "❌ **Operation Cancelled Successfully!**\nSari purani process radd kar di gayi hai.",
+      "❌ **Operation Cancelled Successfully!**",
       parse_mode="Markdown",
       reply_markup=get_main_keyboard()
   )
@@ -112,7 +114,6 @@ def send_welcome(message):
         user_id, success_text, parse_mode="Markdown", reply_markup=get_main_keyboard()
     )
   else:
-    # Force Join Inline Buttons
     markup = types.InlineKeyboardMarkup(row_width=1)
     btn_channel = types.InlineKeyboardButton(
         "📢 JOIN PRIVATE CHANNEL", url=config["channel_link"]
@@ -133,15 +134,12 @@ def send_welcome(message):
     )
 
 
-# --- CHECK MEMBERSHIP CALLBACK ---
 @bot.callback_query_handler(func=lambda call: call.data == "check_join")
 def verify_join(call):
   user_id = call.message.chat.id
 
   if check_subscription(user_id):
-    bot.answer_callback_query(
-        call.id, "✅ Private Channel Joined Successfully!", show_alert=False
-    )
+    bot.answer_callback_query(call.id, "✅ Private Channel Joined Successfully!", show_alert=False)
     try:
       bot.delete_message(user_id, call.message.message_id)
     except:
@@ -152,15 +150,9 @@ def verify_join(call):
         "✅ Membership verified successfully!\n\n"
         "👇 Ab aap niche diye gaye menu buttons ka use kar sakte hain:"
     )
-    bot.send_message(
-        user_id, success_text, parse_mode="Markdown", reply_markup=get_main_keyboard()
-    )
+    bot.send_message(user_id, success_text, parse_mode="Markdown", reply_markup=get_main_keyboard())
   else:
-    bot.answer_callback_query(
-        call.id,
-        "❌ Tumne abhi tak channel join nahi kiya hai!",
-        show_alert=True,
-    )
+    bot.answer_callback_query(call.id, "❌ Tumne abhi tak channel join nahi kiya hai!", show_alert=True)
 
 
 # ================= ADMIN PANEL & RENAME MANAGER =================
@@ -197,18 +189,11 @@ def admin_main_callbacks(call):
 
   if data == "adm_stats":
     bot.answer_callback_query(call.id)
-    bot.send_message(
-        admin_chat_id,
-        f"📊 **Bot Stats:**\n\n👥 Total Active Users: `{len(users)}`",
-        parse_mode="Markdown",
-    )
+    bot.send_message(admin_chat_id, f"📊 **Bot Stats:**\n\n👥 Total Active Users: `{len(users)}`", parse_mode="Markdown")
 
   elif data == "adm_broadcast":
     bot.answer_callback_query(call.id)
-    msg = bot.send_message(
-        admin_chat_id,
-        "📢 Saare users ko kya bhejna hai? Message type karke bhejo:\n*(Rukne ke liye /cancel bhejein)*",
-    )
+    msg = bot.send_message(admin_chat_id, "📢 Saare users ko kya bhejna hai? Message type karke bhejo:\n*(Rukne ke liye /cancel bhejein)*")
     bot.register_next_step_handler(msg, process_broadcast)
 
   elif data == "adm_rename":
@@ -245,7 +230,6 @@ def hall_rename_callback(call):
   bot.register_next_step_handler(msg, get_target_item_to_rename)
 
 
-# --- STEP 1: SELECT ITEM TO RENAME ---
 def get_target_item_to_rename(message):
   if not is_admin(message.chat.id):
     return
@@ -285,7 +269,6 @@ def get_target_item_to_rename(message):
   bot.register_next_step_handler(msg, get_new_app_name)
 
 
-# --- STEP 2: GET NEW NAME ---
 def get_new_app_name(message):
   if not is_admin(message.chat.id):
     return
@@ -310,7 +293,6 @@ def get_new_app_name(message):
     bot.send_message(admin_id, "❌ Session error! Dobara /admin se try karein.", reply_markup=get_main_keyboard())
 
 
-# --- STEP 3: GET NEW URL & UPDATE ---
 def get_new_app_url(message):
   if not is_admin(message.chat.id):
     return
@@ -321,8 +303,6 @@ def get_new_app_url(message):
     return
 
   admin_id = message.chat.id
-  
-  # Smart URL Extractor
   extracted_url = ""
   words = text_to_check.split()
   for word in words:
@@ -456,7 +436,6 @@ def handle_text_messages(message):
     )
 
 
-# --- DIRECT ADMIN MESSAGING SYSTEM ---
 def forward_to_admin(message):
   user_id = message.chat.id
   if message.text and message.text.startswith("/cancel"):
@@ -484,21 +463,39 @@ def forward_to_admin(message):
   bot.send_message(user_id, f"✅ Aapka message Admin ({ADMIN_USERNAME}) ke paas bhej diya gaya hai!", reply_markup=get_main_keyboard())
 
 
-# --- Flask Server ---
+# --- FLASK & SELF-PING SERVER (Keeps bot awake 24/7) ---
 app = Flask(__name__)
 
 @app.route("/")
 def index():
   return "Bot is active and running 24/7!"
 
+def self_ping():
+  """Har 4 minute mein khud ke server ko ping karega taaki Render sleep na ho"""
+  app_url = os.environ.get("RENDER_EXTERNAL_URL")
+  if not app_url:
+    app_url = "http://localhost:10000"
+  
+  while True:
+    time.sleep(240)  # 4 minutes
+    try:
+      requests.get(app_url)
+      print("Self-ping sent to keep bot alive.")
+    except Exception as e:
+      print(f"Self-ping error: {e}")
+
 def run_flask():
   port = int(os.environ.get("PORT", 10000))
   app.run(host="0.0.0.0", port=port)
+
 
 if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Bot with Restored Hall-1 is running...")
+  ping_thread = threading.Thread(target=self_ping)
+  ping_thread.start()
+
+  print("24/7 Sleep-Proof Bot with Self-Ping is running...")
   bot.infinity_polling()
                      
