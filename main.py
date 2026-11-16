@@ -18,6 +18,9 @@ config = {
     "channel_link": "https://t.me/+UyBmDcQRKORlNGI1",  # Channel join invite link
 }
 
+# Temporary storage for step-by-step adding
+temp_admin_data = {}
+
 # Halls Storage (Categories)
 HALL_BOTS = [
     {"name": "🚀 Unlimited OTP Bot", "url": "https://t.me/Unlimited_otp_s_bot"},
@@ -83,9 +86,11 @@ def get_main_keyboard():
 @bot.message_handler(commands=["cancel"])
 def cancel_operation(message):
   user_id = message.chat.id
+  if user_id in temp_admin_data:
+    del temp_admin_data[user_id]
   bot.send_message(
       user_id,
-      "❌ **Operation Cancelled Successfully!**\nSari purani process radd kar di gayi hai.",
+      "❌ **Operation Cancelled Successfully!**\nSari purani process radd kar di gayi hai[span_1](start_span)[span_1](end_span).",
       parse_mode="Markdown",
       reply_markup=get_main_keyboard()
   )
@@ -158,7 +163,7 @@ def verify_join(call):
     )
 
 
-# ================= ADMIN PANEL & HALL MANAGER (Fixed Callbacks) =================
+# ================= ADMIN PANEL & STEP-BY-STEP HALL MANAGER =================
 @bot.message_handler(commands=["admin"])
 def admin_panel(message):
   user_id = message.chat.id
@@ -235,27 +240,17 @@ def hall_action_callbacks(call):
   data = call.data
   bot.answer_callback_query(call.id)
 
-  if data == "hall_add_1":
+  if data in ["hall_add_1", "hall_add_2"]:
+    hall_no = data.split("_")[-1]
+    temp_admin_data[admin_chat_id] = {"hall": hall_no}
     msg = bot.send_message(
         admin_chat_id,
-        "📝 **Hall-1 ke liye naya item bhejo:**\n\n"
-        "Format: `Name | Link`\n"
-        "Example: `🔥 New Bot | https://t.me/example_bot`\n"
+        f"📝 **Hall-{hall_no} ke liye naya item add kar rahe hain:**\n\n"
+        "Pehle iska **Naam (Title)** type karke bhejo:\n"
         "*(Rukne ke liye /cancel bhejein)*",
         parse_mode="Markdown"
     )
-    bot.register_next_step_handler(msg, lambda m: process_add_to_hall(m, "1"))
-
-  elif data == "hall_add_2":
-    msg = bot.send_message(
-        admin_chat_id,
-        "📝 **Hall-2 ke liye naya app bhejo:**\n\n"
-        "Format: `Name | Link`\n"
-        "Example: `11. 💰 New Yono | https://example.com`\n"
-        "*(Rukne ke liye /cancel bhejein)*",
-        parse_mode="Markdown"
-    )
-    bot.register_next_step_handler(msg, lambda m: process_add_to_hall(m, "2"))
+    bot.register_next_step_handler(msg, get_app_name)
 
   elif data == "hall_del_1":
     items = HALL_BOTS
@@ -282,6 +277,69 @@ def hall_action_callbacks(call):
     bot.register_next_step_handler(msg, lambda m: process_delete_from_hall(m, "2"))
 
 
+# --- STEP 1: GET APP NAME ---
+def get_app_name(message):
+  if not is_admin(message.chat.id):
+    return
+  if message.text.startswith("/cancel"):
+    cancel_operation(message)
+    return
+
+  admin_id = message.chat.id
+  app_name = message.text.strip()
+  
+  if admin_id not in temp_admin_data:
+    temp_admin_data[admin_id] = {}
+  
+  temp_admin_data[admin_id]["name"] = app_name
+
+  msg = bot.send_message(
+      admin_id,
+      f"✅ Naam save ho gaya: **{app_name}**\n\n"
+      "🔗 **Ab is app ka link (URL) bhejo:**\n"
+      "*(Rukne ke liye /cancel bhejein)*",
+      parse_mode="Markdown"
+  )
+  bot.register_next_step_handler(msg, get_app_url)
+
+
+# --- STEP 2: GET APP URL & SAVE ---
+def get_app_url(message):
+  if not is_admin(message.chat.id):
+    return
+  if message.text.startswith("/cancel"):
+    cancel_operation(message)
+    return
+
+  admin_id = message.chat.id
+  url = message.text.strip()
+
+  if not url.startswith("http"):
+    url = "https://" + url
+
+  if admin_id in temp_admin_data and "name" in temp_admin_data[admin_id]:
+    hall_no = temp_admin_data[admin_id]["hall"]
+    name = temp_admin_data[admin_id]["name"]
+
+    if hall_no == "1":
+      HALL_BOTS.append({"name": name, "url": url})
+    else:
+      YONO_APPS.append({"name": name, "url": url})
+
+    del temp_admin_data[admin_id]
+
+    bot.send_message(
+        admin_id,
+        f"🎉 **Successfully Added to Hall-{hall_no}!**\n\n"
+        f"📌 Name: `{name}`\n"
+        f"🔗 URL: `{url}`",
+        parse_mode="Markdown",
+        reply_markup=get_main_keyboard()
+    )
+  else:
+    bot.send_message(admin_id, "❌ Kuch gadbadi ho gayi! Dobara /admin se try karein.", reply_markup=get_main_keyboard())
+
+
 def process_broadcast(message):
   if not is_admin(message.chat.id):
     return
@@ -302,33 +360,6 @@ def process_broadcast(message):
       fail += 1
 
   bot.send_message(message.chat.id, f"✅ **Broadcast Done!**\nSuccessful: `{success}` | Failed: `{fail}`", reply_markup=get_main_keyboard())
-
-
-def process_add_to_hall(message, hall_no):
-  if not is_admin(message.chat.id):
-    return
-  if message.text.startswith("/cancel"):
-    cancel_operation(message)
-    return
-
-  text = message.text.strip()
-  if "|" not in text:
-    bot.send_message(message.chat.id, "❌ Galat format! Kripya `Name | Link` format me bhejein (ya /cancel dabayein).")
-    return
-
-  try:
-    name, url = text.split("|", 1)
-    name = name.strip()
-    url = url.strip()
-
-    if hall_no == "1":
-      HALL_BOTS.append({"name": name, "url": url})
-    else:
-      YONO_APPS.append({"name": name, "url": url})
-
-    bot.send_message(message.chat.id, f"✅ **Successfully Added to Hall-{hall_no}!**\n📌 `{name}`", parse_mode="Markdown", reply_markup=get_main_keyboard())
-  except Exception as e:
-    bot.send_message(message.chat.id, f"❌ Error: {e}")
 
 
 def process_delete_from_hall(message, hall_no):
@@ -374,12 +405,18 @@ def handle_text_messages(message):
     return
 
   if text == "🚀 OTP & Earning Panels":
+    if not HALL_BOTS:
+      bot.send_message(user_id, "❌ Hall-1 mein abhi koi item nahi hai!", reply_markup=get_main_keyboard())
+      return
     markup = types.InlineKeyboardMarkup(row_width=1)
     for bot_item in HALL_BOTS:
       markup.add(types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"]))
     bot.send_message(user_id, "🤖 **Hall-1 (OTP & Earning Panels):**\nNiche click karke access karein:", reply_markup=markup)
 
   elif text == "💥 Need Yono Apps?":
+    if not YONO_APPS:
+      bot.send_message(user_id, "❌ Hall-2 mein abhi koi app nahi hai!", reply_markup=get_main_keyboard())
+      return
     markup = types.InlineKeyboardMarkup(row_width=1)
     for app in YONO_APPS:
       markup.add(types.InlineKeyboardButton(app["name"], url=app["url"]))
@@ -458,6 +495,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Hall-Based Bot with Cancel Command is running...")
+  print("Ultimate Step-by-Step Hall Bot is running...")
   bot.infinity_polling()
-  
+      
