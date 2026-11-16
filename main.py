@@ -7,6 +7,7 @@ from telebot import types
 # --- CONFIGURATION ---
 TOKEN = "9176400558:AAGhsvTMerHCu5q8itt46w-DZCRV2uuu5qM"
 ADMIN_IDS = [8429424734, 8472943262]  # Tera aur doosra admin ID
+ADMIN_USERNAME = "@FZXMOHIT1"  # Tera Telegram username
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -21,6 +22,12 @@ config = {
 MY_BOTS = [
     {"name": "🚀 Unlimited OTP Bot", "url": "https://t.me/Unlimited_otp_s_bot"},
     {"name": "daily paisa kamae 💸", "url": "https://t.me/DailycheckIn_009_bot"},
+]
+
+# Your Yono Apps Directory Hub
+YONO_APPS = [
+    {"name": "🔥 Yono Games Hub", "url": "https://yonogames365.com"},
+    {"name": "⚡ FZX Gaming Portal", "url": "https://yonogamef.vercel.app"},
 ]
 
 
@@ -50,14 +57,15 @@ def auto_approve(message):
     print(f"Auto-approve error: {e}")
 
 
-# --- MAIN MENU KEYBOARD (Niche wale buttons) ---
+# --- MAIN MENU KEYBOARD (Niche wale permanent buttons) ---
 def get_main_keyboard():
   markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
   btn_panels = types.KeyboardButton("🚀 OTP & Earning Panels")
+  btn_yono = types.KeyboardButton("💥 Need Yono Apps?")
   btn_contact = types.KeyboardButton("📞 Contact Admin")
   btn_help = types.KeyboardButton("ℹ️ Help / Info")
-  markup.add(btn_panels, btn_contact)
-  markup.add(btn_help)
+  markup.add(btn_panels, btn_yono)
+  markup.add(btn_contact, btn_help)
   return markup
 
 
@@ -71,7 +79,7 @@ def send_welcome(message):
     success_text = (
         "🎉 **WELCOME BACK TO MOHIT FZX BOT** 🎉\n\n"
         "✅ Aapne private channel join kiya hua hai!\n\n"
-        "👇 Niche menu se apne pasandida panels ya Contact Admin par click karein:"
+        "👇 Niche menu se apne pasandida panels ya Yono apps access karein:"
     )
     bot.send_message(
         user_id, success_text, parse_mode="Markdown", reply_markup=get_main_keyboard()
@@ -128,14 +136,14 @@ def verify_join(call):
     )
 
 
-# --- TEXT BUTTON HANDlers (Niche wale buttons ka action) ---
+# --- TEXT BUTTON HANDLERS (Niche wale menu buttons ke actions) ---
 @bot.message_handler(func=lambda message: True)
 def handle_text_messages(message):
   user_id = message.chat.id
   text = message.text
   users.add(user_id)
 
-  # Agar user ne channel join nahi kiya aur kuch bhi bhej raha hai, toh pehle Force Join dikhao
+  # Agar user ne channel join nahi kiya aur kuch bhi bhej raha hai, toh Force Join dikhao
   if not check_subscription(user_id):
     markup = types.InlineKeyboardMarkup(row_width=1)
     btn_channel = types.InlineKeyboardButton(
@@ -164,11 +172,27 @@ def handle_text_messages(message):
         reply_markup=markup,
     )
 
-  elif text == "📞 Contact Admin":
-    msg = bot.send_message(
+  elif text == "💥 Need Yono Apps?":
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    for app in YONO_APPS:
+      markup.add(types.InlineKeyboardButton(app["name"], url=app["url"]))
+    bot.send_message(
         user_id,
-        "✍️ Apni problem ya message yahan type karke bhejo, main turant Admin tak pahuncha deta hoon:",
+        "🎮 **MOHIT FZX YONO APPS HUB:**\nNiche diye gaye buttons se apne apps kholen:",
+        reply_markup=markup,
     )
+
+  elif text == "📞 Contact Admin":
+    contact_text = (
+        f"📞 **CONTACT ADMIN SUPPORT:**\n\n"
+        f"Aap seedha hamare official admin se contact kar sakte hain:\n"
+        f"👉 Admin Username: **{ADMIN_USERNAME}**\n\n"
+        f"✍️ Ya fir apni problem ya message yahan niche type karke bhejein, main turant admin tak bhej dunga:"
+    )
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("💬 Message Admin Direct", url=f"https://t.me/FZXMOHIT1"))
+    
+    msg = bot.send_message(user_id, contact_text, parse_mode="Markdown", reply_markup=markup)
     bot.register_next_step_handler(msg, forward_to_admin)
 
   elif text == "ℹ️ Help / Info":
@@ -188,7 +212,7 @@ def forward_to_admin(message):
   user_name = message.from_user.first_name
 
   if user_text.startswith("/"):
-    return  # Agar user ne command bhej di toh ignore karo
+    return  # Command ignore karein
 
   admin_notification = (
       f"📩 **NEW USER MESSAGE FOR ADMIN:**\n\n"
@@ -196,18 +220,15 @@ def forward_to_admin(message):
       f"💬 Message:\n{user_text}"
   )
 
-  # Sabhi admins ko message forward kar do
   for admin_id in ADMIN_IDS:
     try:
-      markup = types.InlineKeyboardMarkup()
-      # Admin seedha reply button ya user ki ID copy kar sake
       bot.send_message(admin_id, admin_notification, parse_mode="Markdown")
     except Exception as e:
       print(f"Failed to send to admin {admin_id}: {e}")
 
   bot.send_message(
       user_id,
-      "✅ Aapka message Admin ke paas bhej diya gaya hai! Jaldi hi aapko reply milega.",
+      f"✅ Aapka message Admin ({ADMIN_USERNAME}) ke paas bhej diya gaya hai! Jaldi hi reply milega.",
       reply_markup=get_main_keyboard(),
   )
 
@@ -304,6 +325,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Bot with Reply Keyboard & Contact Admin is running...")
+  print("Ultimate Bot with Admin Fix & Yono Apps Hub is running...")
   bot.infinity_polling()
-      
+    
