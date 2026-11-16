@@ -24,10 +24,21 @@ MY_BOTS = [
     {"name": "daily paisa kamae 💸", "url": "https://t.me/DailycheckIn_009_bot"},
 ]
 
-# Your Yono Apps Directory Hub
+# Your Exact Yono Apps Directory Hub
 YONO_APPS = [
-    {"name": "🔥 Yono Games Hub", "url": "https://yonogames365.com"},
-    {"name": "⚡ FZX Gaming Portal", "url": "https://yonogamef.vercel.app"},
+    {"name": "🔥 🌟 OFFICIAL WEBSITE MARKET 🌟 🔥", "url": "https://yono-apps-ka-marketgvd.vercel.app/"},
+    {"name": "📢 Join Telegram Channel", "url": "https://t.me/THEAURA01"},
+    {"name": "📸 Follow Instagram", "url": "https://www.instagram.com/mohit__fzx?exln=MXUzbmh5NHg1OW9law=="},
+    {"name": "1. 🎰 Spin Crush (Bonus ₹100)", "url": "https://3xndhpkhk03.com/?code=ADEJXPMF9ME&t=1791682294"},
+    {"name": "2. 🎮 Yono Arcade (Bonus ₹100)", "url": "https://yonoreferral8.com/?code=N347JULF3PK&t=1791683010"},
+    {"name": "3. 💎 Spin 777 (Bonus ₹100)", "url": "http://spin777ee.com/?code=RHX29F3M1LL&t=1791683198"},
+    {"name": "4. 🃏 Yono Rummy (Bonus ₹100)", "url": "https://yonorummy063.com/?code=MPXALT2UBS2&t=1791683265"},
+    {"name": "5. 🔥 Yono 777 (Bonus ₹100)", "url": "https://yono777hub.online/?code=F9MGVJ2JANK&t=1791683360"},
+    {"name": "6. 🏆 Jaiho Rummy (Bonus ₹100)", "url": "http://jaihorummyagent.in/?code=JURKHKZ28JF&t=1791683459"},
+    {"name": "7. 💥 Rumble Rummy (Bonus ₹100)", "url": "https://rumblerummyag.com/?code=L9TZZYKQMMY&t=1791683587"},
+    {"name": "8. 👑 Ind Club (Bonus ₹100)", "url": "https://indclubhhh.com/?code=ZGX6CAZX5S4&t=1791683687"},
+    {"name": "9. 🌟 Spin Gold (Bonus ₹100)", "url": "http://spingoldi.com/?code=8D2N5AX6A2C&t=1791683854"},
+    {"name": "10. 🎯 Yono Slots (Bonus ₹100)", "url": "https://www.yonoslotsjeetstar.com/?code=V91TQ7MV4T7&t=1791683946"},
 ]
 
 
@@ -136,104 +147,7 @@ def verify_join(call):
     )
 
 
-# --- TEXT BUTTON HANDLERS (Niche wale menu buttons ke actions) ---
-@bot.message_handler(func=lambda message: True)
-def handle_text_messages(message):
-  user_id = message.chat.id
-  text = message.text
-  users.add(user_id)
-
-  # Agar user ne channel join nahi kiya aur kuch bhi bhej raha hai, toh Force Join dikhao
-  if not check_subscription(user_id):
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    btn_channel = types.InlineKeyboardButton(
-        "📢 JOIN PRIVATE CHANNEL", url=config["channel_link"]
-    )
-    btn_check = types.InlineKeyboardButton(
-        "🔄 CHECK MEMBERSHIP", callback_data="check_join"
-    )
-    markup.add(btn_channel, btn_check)
-    bot.send_message(
-        user_id,
-        "❌ Pehle hamara private channel join karein!",
-        reply_markup=markup,
-    )
-    return
-
-  if text == "🚀 OTP & Earning Panels":
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    for bot_item in MY_BOTS:
-      markup.add(
-          types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"])
-      )
-    bot.send_message(
-        user_id,
-        "🤖 **MOHIT FZX OFFICIAL BOTS & PANELS:**\nNiche click karke access karein:",
-        reply_markup=markup,
-    )
-
-  elif text == "💥 Need Yono Apps?":
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    for app in YONO_APPS:
-      markup.add(types.InlineKeyboardButton(app["name"], url=app["url"]))
-    bot.send_message(
-        user_id,
-        "🎮 **MOHIT FZX YONO APPS HUB:**\nNiche diye gaye buttons se apne apps kholen:",
-        reply_markup=markup,
-    )
-
-  elif text == "📞 Contact Admin":
-    contact_text = (
-        f"📞 **CONTACT ADMIN SUPPORT:**\n\n"
-        f"Aap seedha hamare official admin se contact kar sakte hain:\n"
-        f"👉 Admin Username: **{ADMIN_USERNAME}**\n\n"
-        f"✍️ Ya fir apni problem ya message yahan niche type karke bhejein, main turant admin tak bhej dunga:"
-    )
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("💬 Message Admin Direct", url=f"https://t.me/FZXMOHIT1"))
-    
-    msg = bot.send_message(user_id, contact_text, parse_mode="Markdown", reply_markup=markup)
-    bot.register_next_step_handler(msg, forward_to_admin)
-
-  elif text == "ℹ️ Help / Info":
-    bot.send_message(
-        user_id,
-        "ℹ️ **Bot Info:**\n"
-        "Yeh bot Mohit FZX ka official directory bot hai.\n"
-        "Kisi bhi problem ke liye '📞 Contact Admin' par click karein.",
-        reply_markup=get_main_keyboard(),
-    )
-
-
-# --- DIRECT ADMIN MESSAGING SYSTEM ---
-def forward_to_admin(message):
-  user_id = message.chat.id
-  user_text = message.text
-  user_name = message.from_user.first_name
-
-  if user_text.startswith("/"):
-    return  # Command ignore karein
-
-  admin_notification = (
-      f"📩 **NEW USER MESSAGE FOR ADMIN:**\n\n"
-      f"👤 From: {user_name} (`{user_id}`)\n"
-      f"💬 Message:\n{user_text}"
-  )
-
-  for admin_id in ADMIN_IDS:
-    try:
-      bot.send_message(admin_id, admin_notification, parse_mode="Markdown")
-    except Exception as e:
-      print(f"Failed to send to admin {admin_id}: {e}")
-
-  bot.send_message(
-      user_id,
-      f"✅ Aapka message Admin ({ADMIN_USERNAME}) ke paas bhej diya gaya hai! Jaldi hi reply milega.",
-      reply_markup=get_main_keyboard(),
-  )
-
-
-# ================= ADMIN PANEL SECTION =================
+# ================= ADMIN PANEL SECTION (Strict Priority) =================
 @bot.message_handler(commands=["admin"])
 def admin_panel(message):
   user_id = message.chat.id
@@ -307,6 +221,110 @@ def process_broadcast(message):
   )
 
 
+# --- TEXT BUTTON HANDLERS ---
+@bot.message_handler(func=lambda message: True)
+def handle_text_messages(message):
+  user_id = message.chat.id
+  text = message.text
+  users.add(user_id)
+
+  # Force Join check for normal messages
+  if not check_subscription(user_id):
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    btn_channel = types.InlineKeyboardButton(
+        "📢 JOIN PRIVATE CHANNEL", url=config["channel_link"]
+    )
+    btn_check = types.InlineKeyboardButton(
+        "🔄 CHECK MEMBERSHIP", callback_data="check_join"
+    )
+    markup.add(btn_channel, btn_check)
+    bot.send_message(
+        user_id,
+        "❌ Pehle hamara private channel join karein!",
+        reply_markup=markup,
+    )
+    return
+
+  if text == "🚀 OTP & Earning Panels":
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    for bot_item in MY_BOTS:
+      markup.add(
+          types.InlineKeyboardButton(bot_item["name"], url=bot_item["url"])
+      )
+    bot.send_message(
+        user_id,
+        "🤖 **MOHIT FZX OFFICIAL BOTS & PANELS:**\nNiche click karke access karein:",
+        reply_markup=markup,
+    )
+
+  elif text == "💥 Need Yono Apps?":
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    for app in YONO_APPS:
+      markup.add(types.InlineKeyboardButton(app["name"], url=app["url"]))
+    
+    yono_text = (
+        "💥 *Welcome to Yono Apps Ka Market!* 💥\n\n"
+        "Yahan aapko sabhi latest aur verified Yono games, bonus offers aur official links milenge.\n\n"
+        "👇 *Official Social & Direct Download Links:*"
+    )
+    bot.send_message(
+        user_id,
+        yono_text,
+        parse_mode="Markdown",
+        reply_markup=markup
+    )
+
+  elif text == "📞 Contact Admin":
+    contact_text = (
+        f"📞 **CONTACT ADMIN SUPPORT:**\n\n"
+        f"Aap seedha hamare official admin se contact kar sakte hain:\n"
+        f"👉 Admin Username: **{ADMIN_USERNAME}**\n\n"
+        f"✍️ Ya fir apni problem ya message yahan niche type karke bhejein, main turant admin tak bhej dunga:"
+    )
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("💬 Message Admin Direct", url=f"https://t.me/FZXMOHIT1"))
+    
+    msg = bot.send_message(user_id, contact_text, parse_mode="Markdown", reply_markup=markup)
+    bot.register_next_step_handler(msg, forward_to_admin)
+
+  elif text == "ℹ️ Help / Info":
+    bot.send_message(
+        user_id,
+        "ℹ️ **Bot Info:**\n"
+        "Yeh bot Mohit FZX ka official directory bot hai.\n"
+        "Kisi bhi problem ke liye '📞 Contact Admin' par click karein.",
+        reply_markup=get_main_keyboard(),
+    )
+
+
+# --- DIRECT ADMIN MESSAGING SYSTEM ---
+def forward_to_admin(message):
+  user_id = message.chat.id
+  user_text = message.text
+  user_name = message.from_user.first_name
+
+  if user_text.startswith("/"):
+    return
+
+  admin_notification = (
+      f"📩 **NEW USER MESSAGE FOR ADMIN:**\n\n"
+      f"👤 From: {user_name} (`{user_id}`)\n"
+      f"💬 Message:\n{user_text}"
+  )
+
+  for admin_id in ADMIN_IDS:
+    try:
+      bot.send_message(admin_id, admin_notification, parse_mode="Markdown")
+    except Exception as e:
+      print(f"Failed to send to admin {admin_id}: {e}")
+
+  bot.send_message(
+      user_id,
+      f"✅ Aapka message Admin ({ADMIN_USERNAME}) ke paas bhej diya gaya hai! Jaldi hi reply milega.",
+      reply_markup=get_main_keyboard(),
+  )
+
+
 # --- FLASK SERVER ---
 app = Flask(__name__)
 
@@ -325,6 +343,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Bot with Admin Fix & Yono Apps Hub is running...")
+  print("Ultimate Bot with Real Yono Market & Admin Fix is running...")
   bot.infinity_polling()
     
