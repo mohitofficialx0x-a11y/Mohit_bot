@@ -21,24 +21,26 @@ config = {
 # Temporary storage for step-by-step renaming
 temp_admin_data = {}
 
-# Halls Storage with 5 Demo Links each (Ready for you to update anytime!)
+# Halls Storage (Tera OTP & Earning Panel wapas apni jagah par!)
 HALL_BOTS = [
-    {"name": "🚀 Demo Bot 1", "url": "https://t.me/theaura01/1"},
-    {"name": "🚀 Demo Bot 2", "url": "https://t.me/theaura01/2"},
-    {"name": "🚀 Demo Bot 3", "url": "https://t.me/theaura01/3"},
-    {"name": "🚀 Demo Bot 4", "url": "https://t.me/theaura01/4"},
-    {"name": "🚀 Demo Bot 5", "url": "https://t.me/theaura01/5"},
+    {"name": "🚀 Unlimited OTP Bot", "url": "https://t.me/Unlimited_otp_s_bot"},
+    {"name": "daily paisa kamae 💸", "url": "https://t.me/DailycheckIn_009_bot"},
 ]
 
 YONO_APPS = [
     {"name": "🔥 🌟 OFFICIAL WEBSITE MARKET 🌟 🔥", "url": "https://yono-apps-ka-marketgvd.vercel.app/"},
     {"name": "📢 Join Telegram Channel", "url": "https://t.me/THEAURA01"},
     {"name": "📸 Follow Instagram", "url": "https://www.instagram.com/mohit__fzx?exln=MXUzbmh5NHg1OW9law=="},
-    {"name": "1. 🎰 Demo App 1 (Bonus ₹100)", "url": "https://t.me/theaura01/101"},
-    {"name": "2. 🎮 Demo App 2 (Bonus ₹100)", "url": "https://t.me/theaura01/102"},
-    {"name": "3. 💎 Demo App 3 (Bonus ₹100)", "url": "https://t.me/theaura01/103"},
-    {"name": "4. 🃏 Demo App 4 (Bonus ₹100)", "url": "https://t.me/theaura01/104"},
-    {"name": "5. 🔥 Demo App 5 (Bonus ₹100)", "url": "https://t.me/theaura01/105"},
+    {"name": "1. 🎰 Spin Crush (Bonus ₹100)", "url": "https://3xndhpkhk03.com/?code=ADEJXPMF9ME&t=1791682294"},
+    {"name": "2. 🎮 Yono Arcade (Bonus ₹100)", "url": "https://yonoreferral8.com/?code=N347JULF3PK&t=1791683010"},
+    {"name": "3. 💎 Spin 777 (Bonus ₹100)", "url": "http://spin777ee.com/?code=RHX29F3M1LL&t=1791683198"},
+    {"name": "4. 🃏 Yono Rummy (Bonus ₹100)", "url": "https://yonorummy063.com/?code=MPXALT2UBS2&t=1791683265"},
+    {"name": "5. 🔥 Yono 777 (Bonus ₹100)", "url": "https://yono777hub.online/?code=F9MGVJ2JANK&t=1791683360"},
+    {"name": "6. 🏆 Jaiho Rummy (Bonus ₹100)", "url": "http://jaihorummyagent.in/?code=JURKHKZ28JF&t=1791683459"},
+    {"name": "7. 💥 Rumble Rummy (Bonus ₹100)", "url": "https://rumblerummyag.com/?code=L9TZZYKQMMY&t=1791683587"},
+    {"name": "8. 👑 Ind Club (Bonus ₹100)", "url": "https://indclubhhh.com/?code=ZGX6CAZX5S4&t=1791683687"},
+    {"name": "9. 🌟 Spin Gold (Bonus ₹100)", "url": "http://spingoldi.com/?code=8D2N5AX6A2C&t=1791683854"},
+    {"name": "10. 🎯 Yono Slots (Bonus ₹100)", "url": "https://www.yonoslotsjeetstar.com/?code=V91TQ7MV4T7&t=1791683946"},
 ]
 
 
@@ -497,6 +499,6 @@ if __name__ == "__main__":
   flask_thread = threading.Thread(target=run_flask)
   flask_thread.start()
 
-  print("Ultimate Rename-Manager Bot is running...")
+  print("Ultimate Bot with Restored Hall-1 is running...")
   bot.infinity_polling()
-        
+                     
